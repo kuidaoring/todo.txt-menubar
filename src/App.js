@@ -1,25 +1,44 @@
-import logo from './logo.svg';
-import './App.css';
+import { useReducer } from "react";
+import "./App.css";
+import Editor from "./Editor";
 
-function App() {
+const ActionType = {
+  UPDATE: "update",
+};
+
+const initialState = {
+  todoList: [],
+  doneList: [],
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case ActionType.UPDATE:
+      return {
+        todoList: action.state.doc.text.filter(
+          (line) => !line.startsWith("x ") && !line.match(/^\s*$/)
+        ),
+        doneList: action.state.doc.text.filter((line) => line.startsWith("x ")),
+      };
+    default:
+      return state;
+  }
+};
+
+const App = () => {
+  const [state, dispatch] = useReducer(reducer, initialState);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <p>
+        ToDo : {state.todoList.length}, Done: {state.doneList.length}
+      </p>
+      <Editor
+        onChange={(state) =>
+          dispatch({ type: ActionType.UPDATE, state: state })
+        }
+      />
     </div>
   );
-}
+};
 
 export default App;

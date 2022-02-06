@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@codemirror/basic-setup": "^0.19.1",
+    "@codemirror/gutter": "^0.19.9",
+    "@codemirror/history": "^0.19.2",
+    "@codemirror/state": "^0.19.6",
+    "@codemirror/view": "^0.19.42",
+    "@replit/codemirror-vim": "^0.19.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
