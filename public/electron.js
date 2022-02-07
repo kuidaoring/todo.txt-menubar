@@ -6,6 +6,8 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    vibrancy: "under-window",
+    visualEffectState: "active",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
