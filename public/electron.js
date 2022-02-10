@@ -1,13 +1,18 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, Tray } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
 
-const createWindow = () => {
-  const mainWindow = new BrowserWindow({
+let mainWindow;
+let tray;
+
+app.whenReady().then(() => {
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     vibrancy: "under-window",
     visualEffectState: "active",
+    frame: false,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -18,19 +23,17 @@ const createWindow = () => {
       ? "http://localhost:3000"
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
-};
 
-app.whenReady().then(() => {
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+  mainWindow.on("blur", () => {
+    mainWindow.hide();
   });
-});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  tray = new Tray(
+    path.join(__dirname, "../asset/outline_checklist_white_24dp.png")
+  );
+  tray.on("click", () => {
+    mainWindow.setVisibleOnAllWorkspaces(true);
+    mainWindow.show();
+    mainWindow.setVisibleOnAllWorkspaces(false);
+  });
 });
