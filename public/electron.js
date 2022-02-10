@@ -1,7 +1,18 @@
-const { app, BrowserWindow, Tray } = require("electron");
+const { app, nativeTheme, BrowserWindow, Tray } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
 
+const darkModeIcon = path.join(
+  __dirname,
+  "../asset/outline_checklist_white_24dp.png"
+);
+const lightModeIcon = path.join(
+  __dirname,
+  "../asset/outline_checklist_black_24dp.png"
+);
+const getIconPath = () => {
+  return nativeTheme.shouldUseDarkColors ? darkModeIcon : lightModeIcon;
+};
 let mainWindow;
 let tray;
 
@@ -28,12 +39,16 @@ app.whenReady().then(() => {
     mainWindow.hide();
   });
 
-  tray = new Tray(
-    path.join(__dirname, "../asset/outline_checklist_white_24dp.png")
-  );
+  tray = new Tray(getIconPath());
   tray.on("click", () => {
+    if (mainWindow.isVisible()) {
+      mainWindow.hide();
+      return;
+    }
     mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
     mainWindow.setVisibleOnAllWorkspaces(false);
   });
+
+  nativeTheme.on("updated", () => tray.setImage(getIconPath()));
 });
