@@ -4,6 +4,7 @@ import { EditorView } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { vim } from "@replit/codemirror-vim";
+import { todotxt } from "./lib/language/todotxt";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -21,6 +22,7 @@ const Editor = ({ onChange }) => {
       extensions: [
         lineNumbers(),
         vim(),
+        todotxt(),
         oneDark,
         transparentTheme,
         EditorView.updateListener.of((update) => {

@@ -7,7 +7,9 @@
   "dependencies": {
     "@codemirror/basic-setup": "^0.19.1",
     "@codemirror/gutter": "^0.19.9",
+    "@codemirror/highlight": "^0.19.7",
     "@codemirror/history": "^0.19.2",
+    "@codemirror/language": "^0.19.7",
     "@codemirror/state": "^0.19.6",
     "@codemirror/theme-one-dark": "^0.19.1",
     "@codemirror/view": "^0.19.42",
@@ -22,6 +24,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "lezer-generator": "lezer-generator",
     "react-start": "cross-env BROWSER=none react-scripts start",
     "react-build": "react-scripts build",
     "react-test": "react-scripts test",
@@ -50,6 +53,7 @@
     ]
   },
   "devDependencies": {
+    "@lezer/generator": "^0.15.4",
     "cross-env": "^7.0.3",
     "electron": "^17.0.0",
     "electron-builder": "^22.14.13",

@@ -1,0 +1,64 @@
+@top ToDoList { todoContent* }
+
+@skip { whitespace }
+
+todoContent {
+  (
+    DoneContent |
+    PriorityAContent |
+    PriorityBContent |
+    PriorityCContent |
+    NormalContent
+  ) NewLine
+}
+
+DoneContent {
+  Done (PriorityA | PriorityB | PriorityC)? Description
+}
+
+PriorityAContent {
+  PriorityA Description
+}
+
+PriorityBContent {
+  PriorityB Description
+}
+
+PriorityCContent {
+  PriorityC Description
+}
+
+NormalContent {
+  Description
+}
+
+Description {
+  (Project | Context | DueDate | Content)*
+}
+
+@tokens {
+  whitespace { std.whitespace+ }
+  NewLine { $[\n\r] }
+  @precedence { NewLine, whitespace }
+
+  Done { "x" whitespace ![\n\r]+ }
+  PriorityA { "(" $[aA] ")" }
+  PriorityB { "(" $[bB] ")" }
+  PriorityC { "(" $[cC] ")" }
+
+  unicodeChar { $[\u{a1}-\u{10ffff}] }
+  priorityPrefix { "(" }
+  projectPrefix { "+" }
+  contextPrefix { "@" }
+  symbolWithoutSpecialChar { $[\[\]{})'"?!*#\$%&=~^|\\`\-_;:.,] }
+  name { (std.asciiLetter | std.digit | unicodeChar | symbolWithoutSpecialChar)+ }
+  Project { "+" (name | contextPrefix)+ }
+  Context { "@" (name | projectPrefix)+ }
+  Content { name (name | priorityPrefix | contextPrefix | projectPrefix)* }
+  d { $[0-9] }
+  Date { d d d d "-" d d "-" d d }
+  DueDate { "due:" Date }
+  @precedence { whitespace, Done, DueDate, Content }
+}
+
+@detectDelim
