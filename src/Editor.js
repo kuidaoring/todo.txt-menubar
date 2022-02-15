@@ -11,6 +11,9 @@ const transparentTheme = EditorView.theme({
     backgroundColor: "transparent !important",
     height: "100%",
   },
+  ".cm-gutters": {
+    backgroundColor: "transparent !important",
+  },
 });
 
 const Editor = ({ onChange }) => {
