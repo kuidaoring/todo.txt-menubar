@@ -1,4 +1,4 @@
-const { app, nativeTheme, BrowserWindow, Tray } = require("electron");
+const { app, nativeTheme, BrowserWindow, Tray, ipcMain } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
 
@@ -18,8 +18,8 @@ let tray;
 
 app.whenReady().then(() => {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 600,
+    height: 300,
     vibrancy: "under-window",
     visualEffectState: "active",
     frame: false,
@@ -40,6 +40,8 @@ app.whenReady().then(() => {
   });
 
   tray = new Tray(getIconPath());
+  const { x, y } = tray.getBounds();
+  mainWindow.setBounds({ x: x, y: y });
   tray.on("click", () => {
     if (mainWindow.isVisible()) {
       mainWindow.hide();
@@ -51,4 +53,8 @@ app.whenReady().then(() => {
   });
 
   nativeTheme.on("updated", () => tray.setImage(getIconPath()));
+
+  ipcMain.on("set-task-count", (event, todoCount, doneCount) => {
+    tray.setTitle(`📝 ${todoCount} / ✅ ${doneCount}`);
+  });
 });

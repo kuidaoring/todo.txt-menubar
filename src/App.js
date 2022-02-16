@@ -14,11 +14,16 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case ActionType.UPDATE:
+      const todoList = action.state.doc.text.filter(
+        (line) => !line.startsWith("x ") && !line.match(/^\s*$/)
+      );
+      const doneList = action.state.doc.text.filter((line) =>
+        line.startsWith("x ")
+      );
+      window.electronAPI.setTaskCount(todoList.length, doneList.length);
       return {
-        todoList: action.state.doc.text.filter(
-          (line) => !line.startsWith("x ") && !line.match(/^\s*$/)
-        ),
-        doneList: action.state.doc.text.filter((line) => line.startsWith("x ")),
+        todoList: todoList,
+        doneList: doneList,
       };
     default:
       return state;
