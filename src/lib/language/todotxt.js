@@ -12,7 +12,7 @@ const todotxtLanguage = LRLanguage.define({
         "PriorityB PriorityBContent/Description/Content": t.controlKeyword,
         "PriorityC PriorityCContent/Description/Content": t.variableName,
         Project: t.namespace,
-        Context: t.labelName,
+        Context: t.tagName,
         DueDate: t.processingInstruction,
       }),
     ],

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { EditorState } from "@codemirror/state";
+import { EditorState, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { solarizedDark } from "cm6-theme-solarized-dark";
+import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim } from "@replit/codemirror-vim";
 import { todotxt } from "./lib/language/todotxt";
 
@@ -19,31 +20,55 @@ const transparentTheme = EditorView.theme({
   },
 });
 
+const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
+const themeMap = {
+  light: solarizedLight,
+  dark: solarizedDark,
+};
+
 const Editor = ({ onChange }) => {
-  const [editorView, setEditorView] = useState();
+  const [theme, setTheme] = useState(isDark() ? "dark" : "light");
+  const viewRef = useRef(null);
   const containerRef = useRef(null);
+
   useEffect(() => {
-    const startState = EditorState.create({
-      doc: "Hello World!",
-      extensions: [
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (event) => {
+        setTheme(isDark() ? "dark" : "light");
+      });
+  }, []);
+  useEffect(() => {
+    if (containerRef.current) {
+      const extensions = [
         lineNumbers(),
         vim(),
         todotxt(),
-        oneDark,
+        themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
           if (update.changes) {
             onChange && onChange(update.state);
           }
         }),
-      ],
-    });
-    const view = new EditorView({
-      state: startState,
-      parent: containerRef.current,
-    });
-    setEditorView(view);
-  }, []);
+      ];
+      if (!viewRef.current) {
+        const startState = EditorState.create({
+          doc: "Hello World!",
+          extensions: extensions,
+        });
+        const view = new EditorView({
+          state: startState,
+          parent: containerRef.current,
+        });
+        viewRef.current = view;
+      } else {
+        viewRef.current.dispatch({
+          effects: StateEffect.reconfigure.of(extensions),
+        });
+      }
+    }
+  }, [theme]);
   return <div ref={containerRef} />;
 };
 
