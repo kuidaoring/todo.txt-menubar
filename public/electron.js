@@ -1,7 +1,12 @@
 const { app, nativeTheme, BrowserWindow, Tray, ipcMain } = require("electron");
 const path = require("path");
 const isDev = require("electron-is-dev");
+const fs = require("fs").promises;
 
+const defaultTodoTxtPath = path.join(
+  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"],
+  "todo.txt"
+);
 const darkModeIcon = path.join(
   __dirname,
   "../asset/outline_checklist_white_24dp.png"
@@ -13,11 +18,13 @@ const lightModeIcon = path.join(
 const getIconPath = () => {
   return nativeTheme.shouldUseDarkColors ? darkModeIcon : lightModeIcon;
 };
-let mainWindow;
-let tray;
 
-app.whenReady().then(() => {
-  mainWindow = new BrowserWindow({
+const main = async () => {
+  await app.whenReady();
+
+  const content = await fs.readFile(defaultTodoTxtPath, "utf-8").catch("");
+
+  const mainWindow = new BrowserWindow({
     width: 600,
     height: 300,
     vibrancy: "under-window",
@@ -35,11 +42,15 @@ app.whenReady().then(() => {
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
 
+  mainWindow.webContents.on("did-finish-load", () => {
+    mainWindow.webContents.send("did-finish-load-todotxt-file", content);
+  });
+
   mainWindow.on("blur", () => {
     mainWindow.hide();
   });
 
-  tray = new Tray(getIconPath());
+  const tray = new Tray(getIconPath());
   const { x, y } = tray.getBounds();
   mainWindow.setBounds({ x: x, y: y });
   tray.on("click", () => {
@@ -57,4 +68,6 @@ app.whenReady().then(() => {
   ipcMain.on("set-task-count", (event, todoCount, doneCount) => {
     tray.setTitle(`📝 ${todoCount} / ✅ ${doneCount}`);
   });
-});
+};
+
+main();

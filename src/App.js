@@ -1,4 +1,5 @@
 import { useReducer } from "react";
+import { useEffect } from "react/cjs/react.development";
 import "./App.css";
 import Editor from "./Editor";
 
@@ -7,6 +8,7 @@ const ActionType = {
 };
 
 const initialState = {
+  content: "",
   todoList: [],
   doneList: [],
 };
@@ -14,14 +16,14 @@ const initialState = {
 const reducer = (state, action) => {
   switch (action.type) {
     case ActionType.UPDATE:
-      const todoList = action.state.doc.text.filter(
+      const lines = action.content.split("\n");
+      const todoList = lines.filter(
         (line) => !line.startsWith("x ") && !line.match(/^\s*$/)
       );
-      const doneList = action.state.doc.text.filter((line) =>
-        line.startsWith("x ")
-      );
+      const doneList = lines.filter((line) => line.startsWith("x "));
       window.electronAPI.setTaskCount(todoList.length, doneList.length);
       return {
+        content: action.content,
         todoList: todoList,
         doneList: doneList,
       };
@@ -32,15 +34,21 @@ const reducer = (state, action) => {
 
 const App = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  useEffect(() => {
+    window.electronAPI.on("did-finish-load-todotxt-file", (event, content) => {
+      dispatch({ type: ActionType.UPDATE, content: content });
+    });
+  }, []);
   return (
     <div className="App">
       <p>
         ToDo : {state.todoList.length}, Done: {state.doneList.length}
       </p>
       <Editor
-        onChange={(state) =>
-          dispatch({ type: ActionType.UPDATE, state: state })
+        onChange={(content) =>
+          dispatch({ type: ActionType.UPDATE, content: content })
         }
+        content={state.content}
       />
     </div>
   );

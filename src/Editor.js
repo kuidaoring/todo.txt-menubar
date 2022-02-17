@@ -26,7 +26,7 @@ const themeMap = {
   dark: solarizedDark,
 };
 
-const Editor = ({ onChange }) => {
+const Editor = ({ onChange, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
   const containerRef = useRef(null);
@@ -38,6 +38,7 @@ const Editor = ({ onChange }) => {
         setTheme(isDark() ? "dark" : "light");
       });
   }, []);
+
   useEffect(() => {
     if (containerRef.current) {
       const extensions = [
@@ -48,13 +49,13 @@ const Editor = ({ onChange }) => {
         transparentTheme,
         EditorView.updateListener.of((update) => {
           if (update.changes) {
-            onChange && onChange(update.state);
+            onChange && onChange(update.state.doc.toString());
           }
         }),
       ];
       if (!viewRef.current) {
         const startState = EditorState.create({
-          doc: "Hello World!",
+          doc: content,
           extensions: extensions,
         });
         const view = new EditorView({
@@ -69,6 +70,21 @@ const Editor = ({ onChange }) => {
       }
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (viewRef.current) {
+      const currentContent = viewRef.current.state.doc.toString();
+      if (content !== currentContent) {
+        viewRef.current.dispatch({
+          changes: {
+            from: 0,
+            to: viewRef.current.state.doc.length,
+            insert: content,
+          },
+        });
+      }
+    }
+  }, [content]);
   return <div ref={containerRef} />;
 };
 
