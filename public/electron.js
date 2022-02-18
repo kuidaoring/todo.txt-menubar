@@ -22,7 +22,12 @@ const getIconPath = () => {
 const main = async () => {
   await app.whenReady();
 
-  const content = await fs.readFile(defaultTodoTxtPath, "utf-8").catch("");
+  let content;
+  try {
+    content = await fs.readFile(defaultTodoTxtPath, "utf-8");
+  } catch (err) {
+    content = "";
+  }
 
   const mainWindow = new BrowserWindow({
     width: 600,
@@ -67,6 +72,13 @@ const main = async () => {
 
   ipcMain.on("set-task-count", (event, todoCount, doneCount) => {
     tray.setTitle(`📝 ${todoCount} / ✅ ${doneCount}`);
+  });
+  ipcMain.on("save", async (event, content) => {
+    try {
+      await fs.writeFile(defaultTodoTxtPath, content);
+    } catch (err) {
+      console.log("err");
+    }
   });
 };
 

@@ -1,11 +1,14 @@
-import { useReducer } from "react";
-import { useEffect } from "react/cjs/react.development";
+import { useCallback, useReducer } from "react";
+import { useEffect, useRef } from "react/cjs/react.development";
 import "./App.css";
 import Editor from "./Editor";
 
 const ActionType = {
   UPDATE: "update",
+  SAVE: "save",
 };
+
+const SAVE_DELAY_MS = 5000;
 
 const initialState = {
   content: "",
@@ -27,6 +30,9 @@ const reducer = (state, action) => {
         todoList: todoList,
         doneList: doneList,
       };
+    case ActionType.SAVE:
+      window.electronAPI.save(state.content);
+      return state;
     default:
       return state;
   }
@@ -34,10 +40,24 @@ const reducer = (state, action) => {
 
 const App = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const timeoutRef = useRef(null);
   useEffect(() => {
     window.electronAPI.on("did-finish-load-todotxt-file", (event, content) => {
-      dispatch({ type: ActionType.UPDATE, content: content });
+      dispatch({
+        type: ActionType.UPDATE,
+        content: content,
+        dispatch: dispatch,
+      });
     });
+  }, []);
+  const saveTimer = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      timeoutRef.current = null;
+      dispatch({ type: ActionType.SAVE });
+    }, SAVE_DELAY_MS);
   }, []);
   return (
     <div className="App">
@@ -45,9 +65,14 @@ const App = () => {
         ToDo : {state.todoList.length}, Done: {state.doneList.length}
       </p>
       <Editor
-        onChange={(content) =>
-          dispatch({ type: ActionType.UPDATE, content: content })
-        }
+        onChange={(content) => {
+          dispatch({
+            type: ActionType.UPDATE,
+            content: content,
+            dispatch: dispatch,
+          });
+          saveTimer();
+        }}
         content={state.content}
       />
     </div>

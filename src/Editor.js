@@ -48,14 +48,14 @@ const Editor = ({ onChange, content }) => {
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
-          if (update.changes) {
+          if (update.docChanged) {
             onChange && onChange(update.state.doc.toString());
           }
         }),
       ];
       if (!viewRef.current) {
         const startState = EditorState.create({
-          doc: content,
+          doc: "",
           extensions: extensions,
         });
         const view = new EditorView({
