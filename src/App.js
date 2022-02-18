@@ -61,9 +61,9 @@ const App = () => {
   }, []);
   return (
     <div className="App">
-      <p>
+      <header>
         ToDo : {state.todoList.length}, Done: {state.doneList.length}
-      </p>
+      </header>
       <Editor
         onChange={(content) => {
           dispatch({
@@ -75,6 +75,7 @@ const App = () => {
         }}
         content={state.content}
       />
+      <footer>footer area</footer>
     </div>
   );
 };

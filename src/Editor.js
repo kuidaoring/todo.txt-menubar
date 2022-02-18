@@ -6,6 +6,7 @@ import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim } from "@replit/codemirror-vim";
 import { todotxt } from "./lib/language/todotxt";
+import "./Editor.css";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -17,6 +18,12 @@ const transparentTheme = EditorView.theme({
   },
   "&.cm-editor.cm-focused": {
     outline: "none",
+  },
+  "&.cm-editor": {
+    height: "100%",
+  },
+  "&.cm-scroller": {
+    overflow: "auto",
   },
 });
 
@@ -85,7 +92,7 @@ const Editor = ({ onChange, content }) => {
       }
     }
   }, [content]);
-  return <div ref={containerRef} />;
+  return <div ref={containerRef} className="editor-container" />;
 };
 
 export default Editor;
