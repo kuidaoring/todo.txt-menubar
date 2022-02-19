@@ -84,9 +84,6 @@ const App = () => {
 
   return (
     <div className="App">
-      <header>
-        ToDo : {state.todoList.length}, Done: {state.doneList.length}
-      </header>
       <Editor
         onChange={(content) => {
           dispatch({

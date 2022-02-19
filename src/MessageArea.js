@@ -17,7 +17,11 @@ const MessageArea = ({ show, message, onClose, hideDurationMsec }) => {
       }, hideDurationMsec || defaultHideDurationMsec);
     }
   }, [show, message, hideDurationMsec, onClose]);
-  return <p className={`message ${show ? "" : "hidden"}`}>{message}</p>;
+  return (
+    <div className="message-container">
+      <p className={`message ${show ? "" : "hidden"}`}>{message}</p>
+    </div>
+  );
 };
 
 export default MessageArea;
