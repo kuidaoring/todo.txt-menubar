@@ -13,6 +13,7 @@ const ActionType = {
 const SAVE_DELAY_MS = 5000;
 
 const initialState = {
+  init: true,
   content: "",
   todoList: [],
   doneList: [],
@@ -36,6 +37,12 @@ const reducer = (state, action) => {
         doneList: doneList,
       };
     case ActionType.SAVE:
+      if (state.init) {
+        return {
+          ...state,
+          init: false,
+        };
+      }
       window.electronAPI.save(state.content);
       return {
         ...state,
