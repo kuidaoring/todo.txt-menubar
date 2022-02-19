@@ -1,0 +1,7 @@
+.hidden {
+  visibility: hidden;
+}
+.message {
+  margin: 1px;
+  text-align: right;
+}

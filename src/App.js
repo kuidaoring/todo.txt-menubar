@@ -2,10 +2,12 @@ import { useCallback, useReducer } from "react";
 import { useEffect, useRef } from "react/cjs/react.development";
 import "./App.css";
 import Editor from "./Editor";
+import MessageArea from "./MessageArea";
 
 const ActionType = {
   UPDATE: "update",
   SAVE: "save",
+  HIDE_FOOTER: "hide_footer",
 };
 
 const SAVE_DELAY_MS = 5000;
@@ -14,6 +16,8 @@ const initialState = {
   content: "",
   todoList: [],
   doneList: [],
+  message: "",
+  isShowFooter: false,
 };
 
 const reducer = (state, action) => {
@@ -26,13 +30,23 @@ const reducer = (state, action) => {
       const doneList = lines.filter((line) => line.startsWith("x "));
       window.electronAPI.setTaskCount(todoList.length, doneList.length);
       return {
+        ...state,
         content: action.content,
         todoList: todoList,
         doneList: doneList,
       };
     case ActionType.SAVE:
       window.electronAPI.save(state.content);
-      return state;
+      return {
+        ...state,
+        message: "saved",
+        isShowFooter: true,
+      };
+    case ActionType.HIDE_FOOTER:
+      return {
+        ...state,
+        isShowFooter: false,
+      };
     default:
       return state;
   }
@@ -40,7 +54,6 @@ const reducer = (state, action) => {
 
 const App = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const timeoutRef = useRef(null);
   useEffect(() => {
     window.electronAPI.on("did-finish-load-todotxt-file", (event, content) => {
       dispatch({
@@ -50,15 +63,18 @@ const App = () => {
       });
     });
   }, []);
+
+  const timerId = useRef(null);
   const saveTimer = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (timerId.current) {
+      clearTimeout(timerId.current);
     }
-    timeoutRef.current = setTimeout(() => {
-      timeoutRef.current = null;
+    timerId.current = setTimeout(() => {
+      timerId.current = null;
       dispatch({ type: ActionType.SAVE });
     }, SAVE_DELAY_MS);
   }, []);
+
   return (
     <div className="App">
       <header>
@@ -75,7 +91,13 @@ const App = () => {
         }}
         content={state.content}
       />
-      <footer>footer area</footer>
+      <footer>
+        <MessageArea
+          onClose={() => dispatch({ type: ActionType.HIDE_FOOTER })}
+          message={state.message}
+          show={state.isShowFooter}
+        />
+      </footer>
     </div>
   );
 };
