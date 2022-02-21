@@ -4,7 +4,7 @@ import { EditorView } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
-import { vim } from "@replit/codemirror-vim";
+import { vim, Vim } from "@replit/codemirror-vim";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 
@@ -92,6 +92,24 @@ const Editor = ({ onChange, content }) => {
       }
     }
   }, [content]);
+
+  useEffect(() => {
+    Vim.unmap(",");
+    Vim.defineEx("todotxtMarkAsDone", null, (cm, params) => {
+      const state = cm.cm6.viewState.state;
+      const line = state.selection.ranges
+        .filter((range) => range.empty)
+        .map((range) => state.doc.lineAt(range.head))
+        .at(0);
+      viewRef.current.dispatch({
+        changes: {
+          from: line.from,
+          insert: "x ",
+        },
+      });
+    });
+    Vim.map(",x", ":todotxtMarkAsDone", "normal");
+  }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
 
