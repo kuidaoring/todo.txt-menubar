@@ -34,6 +34,27 @@ const themeMap = {
   dark: solarizedDark,
 };
 
+const markAsDone = (cm) => {
+  const state = cm.cm6.viewState.state;
+  const line = state.selection.ranges
+    .filter((range) => range.empty)
+    .map((range) => state.doc.lineAt(range.head))
+    .at(0);
+  const dateWord = format(new Date(), "yyyy-LL-dd");
+  const matchPriority = /^\(([A-Za-z])\) */.exec(line.text);
+  const priorityReplacedTaskText = line.text.replace(/^\([A-Za-z]\) /, "");
+  const priorityLabel =
+    matchPriority && matchPriority[1] ? ` pri:${matchPriority[1]}` : "";
+  const result = `x ${dateWord} ${priorityReplacedTaskText}${priorityLabel}`;
+  cm.cm6.dispatch({
+    changes: {
+      from: line.from,
+      to: line.to,
+      insert: result,
+    },
+  });
+};
+
 const Editor = ({ onChange, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
@@ -96,19 +117,7 @@ const Editor = ({ onChange, content }) => {
 
   useEffect(() => {
     Vim.unmap(",");
-    Vim.defineEx("todotxtMarkAsDone", null, (cm, params) => {
-      const state = cm.cm6.viewState.state;
-      const line = state.selection.ranges
-        .filter((range) => range.empty)
-        .map((range) => state.doc.lineAt(range.head))
-        .at(0);
-      viewRef.current.dispatch({
-        changes: {
-          from: line.from,
-          insert: `x ${format(new Date(), "yyyy-LL-dd")} `,
-        },
-      });
-    });
+    Vim.defineEx("todotxtMarkAsDone", null, markAsDone);
     Vim.map(",x", ":todotxtMarkAsDone", "normal");
   }, []);
   return <div ref={containerRef} className="editor-container" />;
