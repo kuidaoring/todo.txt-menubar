@@ -5,6 +5,7 @@ import { lineNumbers } from "@codemirror/gutter";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim, Vim } from "@replit/codemirror-vim";
+import { format } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 
@@ -104,7 +105,7 @@ const Editor = ({ onChange, content }) => {
       viewRef.current.dispatch({
         changes: {
           from: line.from,
-          insert: "x ",
+          insert: `x ${format(new Date(), "yyyy-LL-dd")} `,
         },
       });
     });
