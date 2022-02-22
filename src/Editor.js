@@ -34,23 +34,48 @@ const themeMap = {
   dark: solarizedDark,
 };
 
-const markAsDone = (cm) => {
+const handleMarkAsDone = (cm) => {
   const state = cm.cm6.viewState.state;
   const line = state.selection.ranges
     .filter((range) => range.empty)
     .map((range) => state.doc.lineAt(range.head))
     .at(0);
+  if (line.text.match(/^x /)) {
+    markAsUnDone(line, cm.cm6);
+  } else {
+    markAsDone(line, cm.cm6);
+  }
+};
+
+const markAsDone = (line, view) => {
   const dateWord = format(new Date(), "yyyy-LL-dd");
   const matchPriority = /^\(([A-Za-z])\) */.exec(line.text);
-  const priorityReplacedTaskText = line.text.replace(/^\([A-Za-z]\) /, "");
+  const priorityTrimmed = line.text.replace(/^\([A-Za-z]\) /, "");
   const priorityLabel =
     matchPriority && matchPriority[1] ? ` pri:${matchPriority[1]}` : "";
-  const result = `x ${dateWord} ${priorityReplacedTaskText}${priorityLabel}`;
-  cm.cm6.dispatch({
+  const result = `x ${dateWord} ${priorityTrimmed}${priorityLabel}`;
+  view.dispatch({
     changes: {
       from: line.from,
       to: line.to,
       insert: result,
+    },
+  });
+};
+
+const markAsUnDone = (line, view) => {
+  const matchPriorityLabel = / pri:([A-Za-z])(\s|$)/.exec(line.text);
+  const priorityWord =
+    matchPriorityLabel && matchPriorityLabel[1]
+      ? `(${matchPriorityLabel[1]}) `
+      : "";
+  const priorityTrimmed = line.text.replace(/ pri:([A-Za-z])(\s|$)?/, "");
+  const doneTrimmed = priorityTrimmed.replace(/^x (\d{4}-\d{2}-\d{2} )?/, "");
+  view.dispatch({
+    changes: {
+      from: line.from,
+      to: line.to,
+      insert: `${priorityWord}${doneTrimmed}`,
     },
   });
 };
@@ -117,8 +142,8 @@ const Editor = ({ onChange, content }) => {
 
   useEffect(() => {
     Vim.unmap(",");
-    Vim.defineEx("todotxtMarkAsDone", null, markAsDone);
     Vim.map(",x", ":todotxtMarkAsDone", "normal");
+    Vim.defineEx("todotxtMarkAsDone", null, handleMarkAsDone);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
