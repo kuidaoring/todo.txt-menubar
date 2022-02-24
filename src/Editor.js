@@ -34,12 +34,15 @@ const themeMap = {
   dark: solarizedDark,
 };
 
-const handleMarkAsDone = (cm) => {
-  const state = cm.cm6.viewState.state;
-  const line = state.selection.ranges
+const getCurrentLine = (state) => {
+  return state.selection.ranges
     .filter((range) => range.empty)
     .map((range) => state.doc.lineAt(range.head))
     .at(0);
+};
+
+const handleMarkAsDone = (cm) => {
+  const line = getCurrentLine(cm.cm6.viewState.state);
   if (line.text.match(/^x /)) {
     markAsUnDone(line, cm.cm6);
   } else {
@@ -76,6 +79,25 @@ const markAsUnDone = (line, view) => {
       from: line.from,
       to: line.to,
       insert: `${priorityWord}${doneTrimmed}`,
+    },
+  });
+};
+
+const handleMarkPriority = (cm, params) => {
+  const inputPriority = params.args[0];
+  const line = getCurrentLine(cm.cm6.viewState.state);
+  if (line.text.match(/^x /)) {
+    return;
+  }
+  let to = line.from;
+  if (line.text.match(/^\([A-Z]\) /)) {
+    to += 4;
+  }
+  cm.cm6.dispatch({
+    changes: {
+      from: line.from,
+      to: to,
+      insert: `(${inputPriority}) `,
     },
   });
 };
@@ -144,6 +166,10 @@ const Editor = ({ onChange, content }) => {
     Vim.unmap(",");
     Vim.map(",x", ":todotxtMarkAsDone", "normal");
     Vim.defineEx("todotxtMarkAsDone", null, handleMarkAsDone);
+    Vim.map(",a", ":todotxtMarkPriority A", "normal");
+    Vim.map(",b", ":todotxtMarkPriority B", "normal");
+    Vim.map(",c", ":todotxtMarkPriority C", "normal");
+    Vim.defineEx("todotxtMarkPriority", null, handleMarkPriority);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
