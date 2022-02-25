@@ -123,6 +123,33 @@ const removePriority = (priority, line, view) => {
   });
 };
 
+const handleChangePriority = (cm, params) => {
+  const line = getCurrentLine(cm.cm6.viewState.state);
+  const matches = line.text.match(/^\(([A-Za-z])\) /);
+  if (!matches) {
+    return;
+  }
+  const currentPriority = matches[1].toUpperCase();
+  const option = params.args[0] ?? null;
+  const charCode =
+    option === "inc"
+      ? currentPriority.charCodeAt() - 1
+      : option === "dec"
+      ? currentPriority.charCodeAt() + 1
+      : -1;
+  if (charCode < "A".charCodeAt() || charCode > "Z".charCodeAt()) {
+    return;
+  }
+
+  cm.cm6.dispatch({
+    changes: {
+      from: line.from + 1,
+      to: line.from + 2,
+      insert: String.fromCharCode(charCode),
+    },
+  });
+};
+
 const Editor = ({ onChange, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
@@ -191,6 +218,9 @@ const Editor = ({ onChange, content }) => {
     Vim.map(",b", ":todotxtMarkPriority B", "normal");
     Vim.map(",c", ":todotxtMarkPriority C", "normal");
     Vim.defineEx("todotxtMarkPriority", null, handleMarkPriority);
+    Vim.map(",k", ":todotxtChangePriority inc", "normal");
+    Vim.map(",j", ":todotxtChangePriority dec", "normal");
+    Vim.defineEx("todotxtChangePriority", null, handleChangePriority);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
