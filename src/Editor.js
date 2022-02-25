@@ -89,15 +89,36 @@ const handleMarkPriority = (cm, params) => {
   if (line.text.match(/^x /)) {
     return;
   }
+  const regexp = new RegExp(`^\\(${inputPriority}\\) `);
+  if (line.text.match(regexp)) {
+    removePriority(inputPriority, line, cm.cm6);
+  } else {
+    markPriority(inputPriority, line, cm.cm6);
+  }
+};
+
+const markPriority = (priority, line, view) => {
   let to = line.from;
   if (line.text.match(/^\([A-Z]\) /)) {
     to += 4;
   }
-  cm.cm6.dispatch({
+  view.dispatch({
     changes: {
       from: line.from,
       to: to,
-      insert: `(${inputPriority}) `,
+      insert: `(${priority}) `,
+    },
+  });
+};
+
+const removePriority = (priority, line, view) => {
+  const regexp = new RegExp(`^\\(${priority}\\) `);
+  const result = line.text.replace(regexp, "");
+  view.dispatch({
+    changes: {
+      from: line.from,
+      to: line.to,
+      insert: result,
     },
   });
 };
