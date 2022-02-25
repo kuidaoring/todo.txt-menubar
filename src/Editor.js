@@ -166,7 +166,7 @@ const compareTaskByPriority = (a, b) => {
   const isATaskDone = a.match(/^x /);
   const isBTaskDone = b.match(/^x /);
   if (isATaskDone && isBTaskDone) {
-    return 0;
+    return compareTaskByDueDate(a, b);
   }
   if (isBTaskDone) {
     return -1;
@@ -177,7 +177,7 @@ const compareTaskByPriority = (a, b) => {
   const aMatches = a.match(/^\(([A-Za-z])\) /);
   const bMatches = b.match(/^\(([A-Za-z])\) /);
   if (!aMatches && !bMatches) {
-    return 0;
+    return compareTaskByDueDate(a, b);
   }
   if (!bMatches) {
     return -1;
@@ -185,10 +185,35 @@ const compareTaskByPriority = (a, b) => {
   if (!aMatches) {
     return 1;
   }
-  if (bMatches[1].toUpperCase() > aMatches[1].toUpperCase()) {
+  const aPriority = aMatches[1].toUpperCase();
+  const bPriority = bMatches[1].toUpperCase();
+  if (aPriority === bPriority) {
+    return compareTaskByDueDate(a, b);
+  }
+  if (aPriority < bPriority) {
     return -1;
   }
-  // TODO: compare by duedate
+  return 1;
+};
+
+const compareTaskByDueDate = (a, b) => {
+  const aMatches = a.match(/due:(\d{4}-\d{2}-\d{2})/);
+  const bMatches = b.match(/due:(\d{4}-\d{2}-\d{2})/);
+  if (!aMatches && !bMatches) {
+    return 0;
+  }
+  if (aMatches && bMatches) {
+    if (aMatches[1] === bMatches[1]) {
+      return 0;
+    }
+    if (aMatches[1] < bMatches[1]) {
+      return -1;
+    }
+    return 1;
+  }
+  if (aMatches) {
+    return -1;
+  }
   return 1;
 };
 
