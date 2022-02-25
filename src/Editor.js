@@ -44,7 +44,7 @@ const getCurrentLine = (state) => {
 const handleMarkAsDone = (cm) => {
   const line = getCurrentLine(cm.cm6.viewState.state);
   if (line.text.match(/^x /)) {
-    markAsUnDone(line, cm.cm6);
+    unMarkAsDone(line, cm.cm6);
   } else {
     markAsDone(line, cm.cm6);
   }
@@ -66,7 +66,7 @@ const markAsDone = (line, view) => {
   });
 };
 
-const markAsUnDone = (line, view) => {
+const unMarkAsDone = (line, view) => {
   const matchPriorityLabel = / pri:([A-Za-z])(\s|$)/.exec(line.text);
   const priorityWord =
     matchPriorityLabel && matchPriorityLabel[1]
@@ -91,7 +91,7 @@ const handleMarkPriority = (cm, params) => {
   }
   const regexp = new RegExp(`^\\(${inputPriority}\\) `);
   if (line.text.match(regexp)) {
-    removePriority(inputPriority, line, cm.cm6);
+    unMarkPriority(inputPriority, line, cm.cm6);
   } else {
     markPriority(inputPriority, line, cm.cm6);
   }
@@ -111,7 +111,7 @@ const markPriority = (priority, line, view) => {
   });
 };
 
-const removePriority = (priority, line, view) => {
+const unMarkPriority = (priority, line, view) => {
   const regexp = new RegExp(`^\\(${priority}\\) `);
   const result = line.text.replace(regexp, "");
   view.dispatch({
