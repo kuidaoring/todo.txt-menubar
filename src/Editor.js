@@ -150,6 +150,48 @@ const handleChangePriority = (cm, params) => {
   });
 };
 
+const handleSortByPriority = (cm) => {
+  const lineArray = cm.cm6.state.doc.toString().split("\n");
+  lineArray.sort(compareTaskByPriority);
+  cm.cm6.dispatch({
+    changes: {
+      from: 0,
+      to: cm.cm6.state.doc.length,
+      insert: lineArray.join("\n"),
+    },
+  });
+};
+
+const compareTaskByPriority = (a, b) => {
+  const isATaskDone = a.match(/^x /);
+  const isBTaskDone = b.match(/^x /);
+  if (isATaskDone && isBTaskDone) {
+    return 0;
+  }
+  if (isBTaskDone) {
+    return -1;
+  }
+  if (isATaskDone) {
+    return 1;
+  }
+  const aMatches = a.match(/^\(([A-Za-z])\) /);
+  const bMatches = b.match(/^\(([A-Za-z])\) /);
+  if (!aMatches && !bMatches) {
+    return 0;
+  }
+  if (!bMatches) {
+    return -1;
+  }
+  if (!aMatches) {
+    return 1;
+  }
+  if (bMatches[1].toUpperCase() > aMatches[1].toUpperCase()) {
+    return -1;
+  }
+  // TODO: compare by duedate
+  return 1;
+};
+
 const Editor = ({ onChange, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
@@ -221,6 +263,8 @@ const Editor = ({ onChange, content }) => {
     Vim.map(",k", ":todotxtChangePriority inc", "normal");
     Vim.map(",j", ":todotxtChangePriority dec", "normal");
     Vim.defineEx("todotxtChangePriority", null, handleChangePriority);
+    Vim.map(",s", ":todotxtSortByPriority", "normal");
+    Vim.defineEx("todotxtSortByPriority", null, handleSortByPriority);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
