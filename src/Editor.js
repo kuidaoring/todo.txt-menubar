@@ -41,9 +41,13 @@ const getCurrentLine = (state) => {
     .at(0);
 };
 
+const isTaskDone = (line) => {
+  return line.startsWith("x ");
+};
+
 const handleMarkAsDone = (cm) => {
   const line = getCurrentLine(cm.cm6.viewState.state);
-  if (line.text.match(/^x /)) {
+  if (isTaskDone(line.text)) {
     unMarkAsDone(line, cm.cm6);
   } else {
     markAsDone(line, cm.cm6);
@@ -86,7 +90,7 @@ const unMarkAsDone = (line, view) => {
 const handleMarkPriority = (cm, params) => {
   const inputPriority = params.args[0];
   const line = getCurrentLine(cm.cm6.viewState.state);
-  if (line.text.match(/^x /)) {
+  if (isTaskDone(line.text)) {
     return;
   }
   const regexp = new RegExp(`^\\(${inputPriority}\\) `);
@@ -163,8 +167,8 @@ const handleSortByPriority = (cm) => {
 };
 
 const compareTaskByPriority = (a, b) => {
-  const isATaskDone = a.match(/^x /);
-  const isBTaskDone = b.match(/^x /);
+  const isATaskDone = isTaskDone(a);
+  const isBTaskDone = isTaskDone(b);
   if (isATaskDone && isBTaskDone) {
     return compareTaskByDueDate(a, b);
   }
@@ -240,7 +244,13 @@ const Editor = ({ onChange, content }) => {
         transparentTheme,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            onChange && onChange(update.state.doc.toString());
+            const content = update.state.doc.toString();
+            const lines = content.split("\n");
+            const todoList = lines.filter(
+              (line) => !isTaskDone(line) && !line.match(/^\s*$/)
+            );
+            const doneList = lines.filter((line) => isTaskDone(line));
+            onChange && onChange(content, todoList, doneList);
           }
         }),
       ];

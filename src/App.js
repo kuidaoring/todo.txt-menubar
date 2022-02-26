@@ -5,6 +5,7 @@ import Editor from "./Editor";
 import MessageArea from "./MessageArea";
 
 const ActionType = {
+  LOAD: "load",
   UPDATE: "update",
   SAVE: "save",
   HIDE_FOOTER: "hide_footer",
@@ -23,18 +24,21 @@ const initialState = {
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case ActionType.UPDATE:
-      const lines = action.content.split("\n");
-      const todoList = lines.filter(
-        (line) => !line.startsWith("x ") && !line.match(/^\s*$/)
-      );
-      const doneList = lines.filter((line) => line.startsWith("x "));
-      window.electronAPI.setTaskCount(todoList.length, doneList.length);
+    case ActionType.LOAD:
       return {
         ...state,
         content: action.content,
-        todoList: todoList,
-        doneList: doneList,
+      };
+    case ActionType.UPDATE:
+      window.electronAPI.setTaskCount(
+        action.todoList.length,
+        action.doneList.length
+      );
+      return {
+        ...state,
+        content: action.content,
+        todoList: action.todoList,
+        doneList: action.doneList,
       };
     case ActionType.SAVE:
       if (state.init) {
@@ -64,7 +68,7 @@ const App = () => {
   useEffect(() => {
     window.electronAPI.on("did-finish-load-todotxt-file", (event, content) => {
       dispatch({
-        type: ActionType.UPDATE,
+        type: ActionType.LOAD,
         content: content,
         dispatch: dispatch,
       });
@@ -85,10 +89,12 @@ const App = () => {
   return (
     <div className="App">
       <Editor
-        onChange={(content) => {
+        onChange={(content, todoList, doneList) => {
           dispatch({
             type: ActionType.UPDATE,
             content: content,
+            todoList: todoList,
+            doneList: doneList,
             dispatch: dispatch,
           });
           saveTimer();
