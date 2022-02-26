@@ -8,7 +8,9 @@ const ActionType = {
   LOAD: "load",
   UPDATE: "update",
   SAVE: "save",
-  HIDE_FOOTER: "hide_footer",
+  ARCHIVE: "archive",
+  SHOW_MESSAGE: "show_message",
+  HIDE_MESSAGE: "hide_message",
 };
 
 const SAVE_DELAY_MS = 5000;
@@ -16,10 +18,11 @@ const SAVE_DELAY_MS = 5000;
 const initialState = {
   init: true,
   content: "",
+  archiveContent: null,
   todoList: [],
   doneList: [],
   message: "",
-  isShowFooter: false,
+  isShowMessage: false,
 };
 
 const reducer = (state, action) => {
@@ -30,10 +33,6 @@ const reducer = (state, action) => {
         content: action.content,
       };
     case ActionType.UPDATE:
-      window.electronAPI.setTaskCount(
-        action.todoList.length,
-        action.doneList.length
-      );
       return {
         ...state,
         content: action.content,
@@ -50,13 +49,22 @@ const reducer = (state, action) => {
       window.electronAPI.save(state.content);
       return {
         ...state,
-        message: "saved",
-        isShowFooter: true,
       };
-    case ActionType.HIDE_FOOTER:
+    case ActionType.ARCHIVE:
       return {
         ...state,
-        isShowFooter: false,
+        archiveContent: action.archiveContent,
+      };
+    case ActionType.SHOW_MESSAGE:
+      return {
+        ...state,
+        message: action.message,
+        isShowMessage: true,
+      };
+    case ActionType.HIDE_MESSAGE:
+      return {
+        ...state,
+        isShowMessage: false,
       };
     default:
       return state;
@@ -75,6 +83,36 @@ const App = () => {
     });
   }, []);
 
+  useEffect(() => {
+    window.electronAPI.setTaskCount(
+      state.todoList.length,
+      state.doneList.length
+    );
+  }, [state.todoList, state.doneList]);
+
+  useEffect(() => {
+    if (!state.archiveContent) {
+      return;
+    }
+    if (window.electronAPI.archive(state.archiveContent.doneContent)) {
+      dispatch({
+        type: ActionType.UPDATE,
+        content: state.archiveContent.content,
+        todoList: state.archiveContent.todoList,
+        doneList: state.archiveContent.doneList,
+      });
+      dispatch({
+        type: ActionType.SHOW_MESSAGE,
+        message: "archived",
+      });
+    } else {
+      dispatch({
+        type: ActionType.SHOW_MESSAGE,
+        message: "archive failed",
+      });
+    }
+  }, [state.archiveContent]);
+
   const timerId = useRef(null);
   const saveTimer = useCallback(() => {
     if (timerId.current) {
@@ -83,6 +121,7 @@ const App = () => {
     timerId.current = setTimeout(() => {
       timerId.current = null;
       dispatch({ type: ActionType.SAVE });
+      dispatch({ type: ActionType.SHOW_MESSAGE, message: "saved" });
     }, SAVE_DELAY_MS);
   }, []);
 
@@ -95,17 +134,27 @@ const App = () => {
             content: content,
             todoList: todoList,
             doneList: doneList,
-            dispatch: dispatch,
           });
           saveTimer();
+        }}
+        onArchive={(doneContent, content, todoList, doneList) => {
+          dispatch({
+            type: ActionType.ARCHIVE,
+            archiveContent: {
+              doneContent: doneContent,
+              content: content,
+              todoList: todoList,
+              doneList: doneList,
+            },
+          });
         }}
         content={state.content}
       />
       <footer>
         <MessageArea
-          onClose={() => dispatch({ type: ActionType.HIDE_FOOTER })}
+          onClose={() => dispatch({ type: ActionType.HIDE_MESSAGE })}
           message={state.message}
-          show={state.isShowFooter}
+          show={state.isShowMessage}
         />
       </footer>
     </div>

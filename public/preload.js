@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   save: (content) => {
     ipcRenderer.send("save", content);
   },
+  archive: (content) => {
+    return ipcRenderer.sendSync("archive", content);
+  },
   on: (channel, callback) => {
     ipcRenderer.on(channel, (event, argv) => callback(event, argv));
   },

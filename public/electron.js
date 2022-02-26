@@ -7,6 +7,10 @@ const defaultTodoTxtPath = path.join(
   process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"],
   "todo.txt"
 );
+const defaultDoneTxtPath = path.join(
+  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"],
+  "done.txt"
+);
 const darkModeIcon = path.join(
   __dirname,
   "../asset/outline_checklist_white_24dp.png"
@@ -78,6 +82,15 @@ const main = async () => {
       await fs.writeFile(defaultTodoTxtPath, content);
     } catch (err) {
       console.log("err");
+    }
+  });
+  ipcMain.on("archive", async (event, content) => {
+    try {
+      await fs.appendFile(defaultDoneTxtPath, `${content}\n`);
+      event.returnValue = true;
+    } catch (err) {
+      console.log("err");
+      event.returnValue = false;
     }
   });
 };

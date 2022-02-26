@@ -155,13 +155,13 @@ const handleChangePriority = (cm, params) => {
 };
 
 const handleSortByPriority = (cm) => {
-  const lineArray = cm.cm6.state.doc.toString().split("\n");
-  lineArray.sort(compareTaskByPriority);
+  const lines = cm.cm6.state.doc.toString().split("\n");
+  lines.sort(compareTaskByPriority);
   cm.cm6.dispatch({
     changes: {
       from: 0,
       to: cm.cm6.state.doc.length,
-      insert: lineArray.join("\n"),
+      insert: lines.join("\n"),
     },
   });
 };
@@ -221,10 +221,26 @@ const compareTaskByDueDate = (a, b) => {
   return 1;
 };
 
-const Editor = ({ onChange, content }) => {
+const handleArchiveDone = (cm, onArchive) => {
+  const currentLines = cm.cm6.state.doc.toString().split("\n");
+  const doneContent = currentLines
+    .filter((line) => isTaskDone(line))
+    .join("\n");
+  const content = currentLines.filter((line) => !isTaskDone(line)).join("\n");
+  const lines = content.split("\n");
+  const todoList = lines.filter(
+    (line) => !isTaskDone(line) && !line.match(/^\s*$/)
+  );
+  const doneList = lines.filter((line) => isTaskDone(line));
+  onArchive(doneContent, content, todoList, doneList);
+};
+
+const Editor = ({ onChange, onArchive, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
   const containerRef = useRef(null);
+  const onArchiveRef = useRef(null);
+  onArchiveRef.current = onArchive;
 
   useEffect(() => {
     window
@@ -300,6 +316,13 @@ const Editor = ({ onChange, content }) => {
     Vim.defineEx("todotxtChangePriority", null, handleChangePriority);
     Vim.map(",s", ":todotxtSortByPriority", "normal");
     Vim.defineEx("todotxtSortByPriority", null, handleSortByPriority);
+    Vim.map(",D", ":todotxtArchiveDone", "normal");
+    Vim.defineEx(
+      "todotxtArchiveDone",
+      null,
+      (cm) =>
+        onArchiveRef.current && handleArchiveDone(cm, onArchiveRef.current)
+    );
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
