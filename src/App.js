@@ -9,6 +9,7 @@ const ActionType = {
   UPDATE: "update",
   SAVE: "save",
   ARCHIVE: "archive",
+  RESET_EFFECT_CONTENT: "reset_effect_content",
   SHOW_MESSAGE: "show_message",
   HIDE_MESSAGE: "hide_message",
 };
@@ -18,6 +19,7 @@ const SAVE_DELAY_MS = 5000;
 const initialState = {
   init: true,
   content: "",
+  saveContent: null,
   archiveContent: null,
   todoList: [],
   doneList: [],
@@ -46,14 +48,20 @@ const reducer = (state, action) => {
           init: false,
         };
       }
-      window.electronAPI.save(state.content);
       return {
         ...state,
+        saveContent: state.content,
       };
     case ActionType.ARCHIVE:
       return {
         ...state,
         archiveContent: action.archiveContent,
+      };
+    case ActionType.RESET_EFFECT_CONTENT:
+      return {
+        ...state,
+        saveContent: null,
+        archiveContent: null,
       };
     case ActionType.SHOW_MESSAGE:
       return {
@@ -78,7 +86,38 @@ const App = () => {
       dispatch({
         type: ActionType.LOAD,
         content: content,
-        dispatch: dispatch,
+      });
+    });
+  }, []);
+
+  const timerId = useRef(null);
+  const saveTimer = useCallback(() => {
+    if (timerId.current) {
+      clearTimeout(timerId.current);
+    }
+    timerId.current = setTimeout(() => {
+      timerId.current = null;
+      dispatch({ type: ActionType.SAVE });
+    }, SAVE_DELAY_MS);
+  }, []);
+
+  useEffect(() => {
+    window.electronAPI.on("save-success-reply", (event, err) => {
+      dispatch({
+        type: ActionType.SHOW_MESSAGE,
+        message: "saved",
+      });
+      dispatch({
+        type: ActionType.RESET_EFFECT_CONTENT,
+      });
+    });
+    window.electronAPI.on("save-failed-reply", (event, err) => {
+      dispatch({
+        type: ActionType.SHOW_MESSAGE,
+        message: "save failed",
+      });
+      dispatch({
+        type: ActionType.RESET_EFFECT_CONTENT,
       });
     });
   }, []);
@@ -89,6 +128,13 @@ const App = () => {
       state.doneList.length
     );
   }, [state.todoList, state.doneList]);
+
+  useEffect(() => {
+    if (!state.saveContent) {
+      return;
+    }
+    window.electronAPI.save(state.saveContent);
+  }, [state.saveContent]);
 
   useEffect(() => {
     if (!state.archiveContent) {
@@ -111,19 +157,10 @@ const App = () => {
         message: "archive failed",
       });
     }
+    dispatch({
+      type: ActionType.RESET_EFFECT_CONTENT,
+    });
   }, [state.archiveContent]);
-
-  const timerId = useRef(null);
-  const saveTimer = useCallback(() => {
-    if (timerId.current) {
-      clearTimeout(timerId.current);
-    }
-    timerId.current = setTimeout(() => {
-      timerId.current = null;
-      dispatch({ type: ActionType.SAVE });
-      dispatch({ type: ActionType.SHOW_MESSAGE, message: "saved" });
-    }, SAVE_DELAY_MS);
-  }, []);
 
   return (
     <div className="App">

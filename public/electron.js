@@ -80,8 +80,10 @@ const main = async () => {
   ipcMain.on("save", async (event, content) => {
     try {
       await fs.writeFile(defaultTodoTxtPath, content);
+      event.reply("save-success-reply");
     } catch (err) {
-      console.log("err");
+      console.log(`save failed: ${err}`);
+      event.reply("save-failed-reply", err);
     }
   });
   ipcMain.on("archive", async (event, content) => {
@@ -89,7 +91,7 @@ const main = async () => {
       await fs.appendFile(defaultDoneTxtPath, `${content}\n`);
       event.returnValue = true;
     } catch (err) {
-      console.log("err");
+      console.log(`archive failed: ${err}`);
       event.returnValue = false;
     }
   });
