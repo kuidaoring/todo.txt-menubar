@@ -9,7 +9,7 @@ const ActionType = {
   UPDATE: "update",
   SAVE: "save",
   ARCHIVE: "archive",
-  RESET_EFFECT_CONTENT: "reset_effect_content",
+  RESET_EFFECT: "reset_effect",
   SHOW_MESSAGE: "show_message",
   HIDE_MESSAGE: "hide_message",
 };
@@ -57,7 +57,7 @@ const reducer = (state, action) => {
         ...state,
         archiveContent: action.archiveContent,
       };
-    case ActionType.RESET_EFFECT_CONTENT:
+    case ActionType.RESET_EFFECT:
       return {
         ...state,
         saveContent: null,
@@ -108,7 +108,7 @@ const App = () => {
         message: "saved",
       });
       dispatch({
-        type: ActionType.RESET_EFFECT_CONTENT,
+        type: ActionType.RESET_EFFECT,
       });
     });
     window.electronAPI.on("save-failed-reply", (event, err) => {
@@ -117,7 +117,7 @@ const App = () => {
         message: "save failed",
       });
       dispatch({
-        type: ActionType.RESET_EFFECT_CONTENT,
+        type: ActionType.RESET_EFFECT,
       });
     });
   }, []);
@@ -140,6 +140,7 @@ const App = () => {
     if (!state.archiveContent) {
       return;
     }
+    let message;
     if (window.electronAPI.archive(state.archiveContent.doneContent)) {
       dispatch({
         type: ActionType.UPDATE,
@@ -147,18 +148,16 @@ const App = () => {
         todoList: state.archiveContent.todoList,
         doneList: state.archiveContent.doneList,
       });
-      dispatch({
-        type: ActionType.SHOW_MESSAGE,
-        message: "archived",
-      });
+      message = "archived";
     } else {
-      dispatch({
-        type: ActionType.SHOW_MESSAGE,
-        message: "archive failed",
-      });
+      message = "archive failed";
     }
     dispatch({
-      type: ActionType.RESET_EFFECT_CONTENT,
+      type: ActionType.SHOW_MESSAGE,
+      message: message,
+    });
+    dispatch({
+      type: ActionType.RESET_EFFECT,
     });
   }, [state.archiveContent]);
 
