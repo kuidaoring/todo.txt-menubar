@@ -10,7 +10,7 @@ import { lineNumbers } from "@codemirror/gutter";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim, Vim, getCM } from "@replit/codemirror-vim";
-import { format } from "date-fns";
+import { format, addDays, parse } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 
@@ -240,7 +240,7 @@ const handleArchiveDone = (cm, onArchive) => {
   onArchive(doneContent, content, todoList, doneList);
 };
 
-const dueDateKeyMap = keymap.of([
+const insertDueDateKeymap = keymap.of([
   {
     key: "d u e :",
     run(view) {
@@ -257,7 +257,37 @@ const dueDateKeyMap = keymap.of([
     },
   },
 ]);
-const dueDateExtentionCompartment = new Compartment();
+const insertDueDateKeymapCompartment = new Compartment();
+
+const handleChangeDueDate = (cm, params) => {
+  const line = getCurrentLine(cm.cm6.viewState.state);
+  const dueDateMatch = line.text.match(/due:(\d{4}-\d{2}-\d{2})/);
+  if (!dueDateMatch) {
+    cm.cm6.dispatch({
+      changes: {
+        from: line.to,
+        insert: ` due:${format(addDays(new Date(), 1), "yyyy-LL-dd")}`,
+      },
+    });
+    return;
+  }
+  try {
+    const parsed = parse(dueDateMatch[1], "yyyy-LL-dd", new Date());
+    const replaced = line.text.replace(
+      `due:${dueDateMatch[1]}`,
+      `due:${format(addDays(parsed, 1), "yyyy-LL-dd")}`
+    );
+    cm.cm6.dispatch({
+      changes: {
+        from: line.from,
+        to: line.to,
+        insert: replaced,
+      },
+    });
+  } catch (err) {
+    return;
+  }
+};
 
 const Editor = ({ onChange, onArchive, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
@@ -280,7 +310,7 @@ const Editor = ({ onChange, onArchive, content }) => {
         lineNumbers(),
         vim(),
         todotxt(),
-        dueDateExtentionCompartment.of([]),
+        insertDueDateKeymapCompartment.of([]),
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
@@ -307,9 +337,11 @@ const Editor = ({ onChange, onArchive, content }) => {
         viewRef.current = view;
         const cm = getCM(viewRef.current);
         cm.on("vim-mode-change", (event) => {
-          const dueDateExtension = event.mode === "insert" ? dueDateKeyMap : [];
+          const dueDateExtension =
+            event.mode === "insert" ? insertDueDateKeymap : [];
           viewRef.current.dispatch({
-            effects: dueDateExtentionCompartment.reconfigure(dueDateExtension),
+            effects:
+              insertDueDateKeymapCompartment.reconfigure(dueDateExtension),
           });
         });
       } else {
@@ -355,6 +387,8 @@ const Editor = ({ onChange, onArchive, content }) => {
       (cm) =>
         onArchiveRef.current && handleArchiveDone(cm, onArchiveRef.current)
     );
+    Vim.map(",p", ":todotxtChangeDueDate inc", "normal");
+    Vim.defineEx("todotxtChangeDueDate", null, handleChangeDueDate);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
 };
