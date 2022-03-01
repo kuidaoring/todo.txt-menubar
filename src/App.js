@@ -88,6 +88,22 @@ const App = () => {
         content: content,
       });
     });
+    window.electronAPI.on(
+      "did-finish-load-todotxt-file",
+      (event, content, loadSuccess) => {
+        if (loadSuccess) {
+          dispatch({
+            type: ActionType.LOAD,
+            content: content,
+          });
+        } else {
+          dispatch({
+            type: ActionType.SHOW_MESSAGE,
+            message: "load failed",
+          });
+        }
+      }
+    );
   }, []);
 
   const timerId = useRef(null);

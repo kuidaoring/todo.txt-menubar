@@ -27,10 +27,12 @@ const main = async () => {
   await app.whenReady();
 
   let content;
+  let loadSuccess = true;
   try {
     content = await fs.readFile(defaultTodoTxtPath, "utf-8");
   } catch (err) {
     content = "";
+    loadSuccess = false;
   }
 
   const mainWindow = new BrowserWindow({
@@ -52,7 +54,11 @@ const main = async () => {
   );
 
   mainWindow.webContents.on("did-finish-load", () => {
-    mainWindow.webContents.send("did-finish-load-todotxt-file", content);
+    mainWindow.webContents.send(
+      "did-finish-load-todotxt-file",
+      content,
+      loadSuccess
+    );
   });
 
   mainWindow.on("blur", () => {
