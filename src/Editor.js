@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { EditorState, StateEffect } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import {
+  EditorState,
+  StateEffect,
+  Compartment,
+  EditorSelection,
+} from "@codemirror/state";
+import { EditorView, keymap } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
-import { vim, Vim } from "@replit/codemirror-vim";
+import { vim, Vim, getCM } from "@replit/codemirror-vim";
 import { format } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
@@ -235,6 +240,25 @@ const handleArchiveDone = (cm, onArchive) => {
   onArchive(doneContent, content, todoList, doneList);
 };
 
+const dueDateKeyMap = keymap.of([
+  {
+    key: "d u e :",
+    run(view) {
+      view.dispatch(
+        view.state.changeByRange((range) => ({
+          changes: {
+            from: range.from,
+            insert: `due:${format(new Date(), "yyyy-LL-dd")}`,
+          },
+          range: EditorSelection.range(range.from + 14, range.to + 14),
+        }))
+      );
+      return true;
+    },
+  },
+]);
+const dueDateExtentionCompartment = new Compartment();
+
 const Editor = ({ onChange, onArchive, content }) => {
   const [theme, setTheme] = useState(isDark() ? "dark" : "light");
   const viewRef = useRef(null);
@@ -256,6 +280,7 @@ const Editor = ({ onChange, onArchive, content }) => {
         lineNumbers(),
         vim(),
         todotxt(),
+        dueDateExtentionCompartment.of([]),
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
@@ -280,6 +305,13 @@ const Editor = ({ onChange, onArchive, content }) => {
           parent: containerRef.current,
         });
         viewRef.current = view;
+        const cm = getCM(viewRef.current);
+        cm.on("vim-mode-change", (event) => {
+          const dueDateExtension = event.mode === "insert" ? dueDateKeyMap : [];
+          viewRef.current.dispatch({
+            effects: dueDateExtentionCompartment.reconfigure(dueDateExtension),
+          });
+        });
       } else {
         viewRef.current.dispatch({
           effects: StateEffect.reconfigure.of(extensions),
