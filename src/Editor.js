@@ -10,7 +10,7 @@ import { lineNumbers } from "@codemirror/gutter";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim, Vim, getCM } from "@replit/codemirror-vim";
-import { format, addDays, parse } from "date-fns";
+import { format, addDays, parse, subDays } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 
@@ -261,12 +261,27 @@ const insertDueDateKeymapCompartment = new Compartment();
 
 const handleChangeDueDate = (cm, params) => {
   const line = getCurrentLine(cm.cm6.viewState.state);
+  if (isTaskDone(line.text)) {
+    return;
+  }
+  const incrementOrDecrementFunc =
+    params.args[0] === "inc"
+      ? (date) => addDays(date, 1)
+      : params.args[0] === "dec"
+      ? (date) => subDays(date, 1)
+      : null;
+  if (!incrementOrDecrementFunc) {
+    return;
+  }
   const dueDateMatch = line.text.match(/due:(\d{4}-\d{2}-\d{2})/);
   if (!dueDateMatch) {
     cm.cm6.dispatch({
       changes: {
         from: line.to,
-        insert: ` due:${format(addDays(new Date(), 1), "yyyy-LL-dd")}`,
+        insert: ` due:${format(
+          incrementOrDecrementFunc(new Date()),
+          "yyyy-LL-dd"
+        )}`,
       },
     });
     return;
@@ -275,7 +290,7 @@ const handleChangeDueDate = (cm, params) => {
     const parsed = parse(dueDateMatch[1], "yyyy-LL-dd", new Date());
     const replaced = line.text.replace(
       `due:${dueDateMatch[1]}`,
-      `due:${format(addDays(parsed, 1), "yyyy-LL-dd")}`
+      `due:${format(incrementOrDecrementFunc(parsed), "yyyy-LL-dd")}`
     );
     cm.cm6.dispatch({
       changes: {
@@ -388,6 +403,7 @@ const Editor = ({ onChange, onArchive, content }) => {
         onArchiveRef.current && handleArchiveDone(cm, onArchiveRef.current)
     );
     Vim.map(",p", ":todotxtChangeDueDate inc", "normal");
+    Vim.map(",P", ":todotxtChangeDueDate dec", "normal");
     Vim.defineEx("todotxtChangeDueDate", null, handleChangeDueDate);
   }, []);
   return <div ref={containerRef} className="editor-container" />;
