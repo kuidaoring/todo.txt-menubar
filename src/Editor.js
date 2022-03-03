@@ -7,6 +7,7 @@ import {
 } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
+import { history } from "@codemirror/history";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { vim, Vim, getCM } from "@replit/codemirror-vim";
@@ -336,6 +337,7 @@ const Editor = ({ onChange, onArchive, content }) => {
     if (containerRef.current) {
       const [vimStyle, vimPlugin, , vimPanelState] = vim();
       const extensions = [
+        history(),
         lineNumbers(),
         vimStyle,
         vimPlugin,
