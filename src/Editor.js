@@ -31,6 +31,19 @@ const transparentTheme = EditorView.theme({
   "&.cm-scroller": {
     overflow: "auto",
   },
+  ".cm-vimMode .cm-line": {
+    caretColor: "transparent !important",
+  },
+  ".cm-fat-cursor": {
+    position: "absolute",
+    background: "#ff9696",
+    border: "none",
+    whiteSpace: "pre",
+  },
+  "&:not(.cm-focused) .cm-fat-cursor": {
+    background: "none",
+    outline: "solid 1px #ff9696",
+  },
 });
 
 const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -321,9 +334,12 @@ const Editor = ({ onChange, onArchive, content }) => {
 
   useEffect(() => {
     if (containerRef.current) {
+      const [vimStyle, vimPlugin, , vimPanelState] = vim();
       const extensions = [
         lineNumbers(),
-        vim(),
+        vimStyle,
+        vimPlugin,
+        vimPanelState,
         todotxt(),
         insertDueDateKeymapCompartment.of([]),
         themeMap[theme],
