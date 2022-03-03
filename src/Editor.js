@@ -354,9 +354,11 @@ const Editor = ({ onChange, onArchive, content }) => {
         cm.on("vim-mode-change", (event) => {
           const dueDateExtension =
             event.mode === "insert" ? insertDueDateKeymap : [];
-          viewRef.current.dispatch({
-            effects:
-              insertDueDateKeymapCompartment.reconfigure(dueDateExtension),
+          setTimeout(() => {
+            viewRef.current.dispatch({
+              effects:
+                insertDueDateKeymapCompartment.reconfigure(dueDateExtension),
+            });
           });
         });
       } else {
