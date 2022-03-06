@@ -50,7 +50,7 @@ const main = async () => {
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000"
-      : `file://${path.join(__dirname, "../build/index.html")}`
+      : `file://${path.join(__dirname, "../public/index.html")}`
   );
 
   mainWindow.webContents.on("did-finish-load", () => {

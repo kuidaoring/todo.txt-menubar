@@ -2,7 +2,7 @@
   "name": "todo-txt-app",
   "version": "0.1.0",
   "private": true,
-  "main": "public/electron.js",
+  "main": "electron/main.js",
   "homepage": "./",
   "dependencies": {
     "@codemirror/basic-setup": "^0.19.1",
@@ -56,6 +56,8 @@
   },
   "devDependencies": {
     "@lezer/generator": "^0.15.4",
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.13",
     "cross-env": "^7.0.3",
     "electron": "^17.0.0",
     "electron-builder": "^22.14.13",

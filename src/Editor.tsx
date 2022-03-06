@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { EditorState, StateEffect } from "@codemirror/state";
+import { EditorState, Extension, StateEffect } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { lineNumbers } from "@codemirror/gutter";
 import { history } from "@codemirror/history";
@@ -9,6 +9,7 @@ import { vim, Vim } from "@replit/codemirror-vim";
 import { format, addDays, parse, subDays } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
+import React from "react";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -155,7 +156,7 @@ const handleChangePriority = (cm, params) => {
       : option === "dec"
       ? currentPriority.charCodeAt() + 1
       : -1;
-  if (charCode < "A".charCodeAt() || charCode > "Z".charCodeAt()) {
+  if (charCode < "A".charCodeAt(0) || charCode > "Z".charCodeAt(0)) {
     return;
   }
 
@@ -311,7 +312,7 @@ const Editor = ({ onChange, onArchive, content }) => {
 
   useEffect(() => {
     if (containerRef.current) {
-      const [vimStyle, vimPlugin, , vimPanelState] = vim();
+      const [vimStyle, vimPlugin, vimPanelState] = vim() as Extension[];
       const extensions = [
         history(),
         lineNumbers(),

@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useRef } from "react/cjs/react.development";
 import "./MessageArea.css";
 

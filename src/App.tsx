@@ -1,8 +1,8 @@
-import { useCallback, useReducer } from "react";
-import { useEffect, useRef } from "react/cjs/react.development";
+import React from "react";
+import { useEffect, useRef, useCallback, useReducer } from "react";
 import "./App.css";
 import Editor from "./Editor";
-import MessageArea from "./MessageArea";
+import MessageArea  from "./MessageArea";
 
 const ActionType = {
   LOAD: "load",
@@ -206,8 +206,7 @@ const App = () => {
         <MessageArea
           onClose={() => dispatch({ type: ActionType.HIDE_MESSAGE })}
           message={state.message}
-          show={state.isShowMessage}
-        />
+          show={state.isShowMessage} hideDurationMsec={undefined}        />
       </footer>
     </div>
   );
