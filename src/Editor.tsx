@@ -42,6 +42,28 @@ const transparentTheme = EditorView.theme({
     background: "none",
     outline: "solid 1px #ff9696",
   },
+  ".cm-panels.cm-panels-bottom": {
+    borderTop: "1px solid rgba(102, 102, 102, 0.2) !important",
+  },
+  ".cm-panels": {
+    backgroundColor: "transparent !important",
+    color: "#657b83 !important",
+  },
+  ".cm-panels input": {
+    color: "#657b83",
+  },
+  "@media (prefers-color-scheme: dark)": {
+    ".cm-panels.cm-panels-bottom": {
+      borderTop: "1px solid rgba(255, 255, 255, 0.2) !important",
+    },
+    ".cm-panels": {
+      backgroundColor: "transparent !important",
+      color: "#93a1a1 !important",
+    },
+    ".cm-panels input": {
+      color: "#93a1a1",
+    },
+  },
 });
 
 const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
