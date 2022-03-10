@@ -1,14 +1,14 @@
-const { app, nativeTheme, BrowserWindow, Tray, ipcMain } = require("electron");
-const path = require("path");
-const isDev = require("electron-is-dev");
-const fs = require("fs").promises;
+import { app, nativeTheme, BrowserWindow, Tray, ipcMain } from "electron";
+import path from "path";
+import isDev from "electron-is-dev";
+import fs from "fs/promises";
 
 const defaultTodoTxtPath = path.join(
-  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"],
+  (process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"]) as string,
   "todo.txt"
 );
 const defaultDoneTxtPath = path.join(
-  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"],
+  (process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"]) as string,
   "done.txt"
 );
 const darkModeIcon = path.join(
@@ -26,7 +26,7 @@ const getIconPath = () => {
 const main = async () => {
   await app.whenReady();
 
-  let content;
+  let content: string;
   let loadSuccess = true;
   try {
     content = await fs.readFile(defaultTodoTxtPath, "utf-8");

@@ -1,16 +1,16 @@
-const { contextBridge, ipcRenderer } = require("electron");
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  setTaskCount: (todoCount, doneCount) => {
+  setTaskCount: (todoCount: number, doneCount: number) => {
     ipcRenderer.send("set-task-count", todoCount, doneCount);
   },
-  save: (content) => {
+  save: (content: string) => {
     ipcRenderer.send("save", content);
   },
-  archive: (content) => {
+  archive: (content: string) => {
     return ipcRenderer.sendSync("archive", content);
   },
-  on: (channel, callback) => {
+  on: (channel: string, callback: (event: IpcRendererEvent, ...argv: any[]) => void) => {
     ipcRenderer.on(channel, (event, argv) => callback(event, argv));
   },
 });

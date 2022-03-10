@@ -2,7 +2,7 @@
   "name": "todo-txt-app",
   "version": "0.1.0",
   "private": true,
-  "main": "electron/main.js",
+  "main": "dist/main.js",
   "homepage": "./",
   "dependencies": {
     "@codemirror/basic-setup": "^0.19.1",
@@ -32,9 +32,11 @@
     "react-build": "react-scripts build",
     "react-test": "react-scripts test",
     "react-eject": "react-scripts eject",
+    "electron-dev": "run-s electron-tsc electron-start",
+    "electron-tsc": "tsc -p tsconfig.main.json",
     "electron-start": "wait-on http://localhost:3000/ && electron .",
     "electron-build": "electron-builder",
-    "start": "run-p react-start electron-start",
+    "start": "run-p react-start electron-dev",
     "build": "run-s react-build electron-build"
   },
   "eslintConfig": {
@@ -63,6 +65,7 @@
     "electron": "^17.0.0",
     "electron-builder": "^22.14.13",
     "npm-run-all": "^4.1.5",
+    "typescript": "^4.6.2",
     "wait-on": "^6.0.0"
   }
 }
