@@ -352,7 +352,7 @@ const Editor: React.FC<Props> = ({ onChange, onArchive, content }) => {
 
   useEffect(() => {
     if (containerRef.current) {
-      const [vimStyle, vimPlugin, vimPanelState] = vim() as Extension[];
+      const [vimStyle, vimPlugin, , vimPanelState] = vim() as Extension[];
       const extensions = [
         history(),
         lineNumbers(),
