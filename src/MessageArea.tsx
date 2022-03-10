@@ -1,11 +1,22 @@
-import React from "react";
-import { useEffect, useRef } from "react/cjs/react.development";
+import React, { useEffect, useRef } from "react";
 import "./MessageArea.css";
 
 const defaultHideDurationMsec = 3000;
 
-const MessageArea = ({ show, message, onClose, hideDurationMsec }) => {
-  const timer = useRef(null);
+interface Props {
+  show: boolean;
+  message: string;
+  onClose: () => void;
+  hideDurationMsec?: number;
+}
+
+const MessageArea: React.FC<Props> = ({
+  show,
+  message,
+  onClose,
+  hideDurationMsec,
+}) => {
+  const timer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (timer.current) {
@@ -14,7 +25,7 @@ const MessageArea = ({ show, message, onClose, hideDurationMsec }) => {
     if (show) {
       timer.current = setTimeout(() => {
         timer.current = null;
-        onClose && onClose();
+        onClose();
       }, hideDurationMsec || defaultHideDurationMsec);
     }
   }, [show, message, hideDurationMsec, onClose]);

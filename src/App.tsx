@@ -2,44 +2,83 @@ import React from "react";
 import { useEffect, useRef, useCallback, useReducer } from "react";
 import "./App.css";
 import Editor from "./Editor";
-import MessageArea  from "./MessageArea";
+import MessageArea from "./MessageArea";
 
-const ActionType = {
-  LOAD: "load",
-  UPDATE: "update",
-  SAVE: "save",
-  ARCHIVE: "archive",
-  RESET_EFFECT: "reset_effect",
-  SHOW_MESSAGE: "show_message",
-  HIDE_MESSAGE: "hide_message",
-};
+enum ActionType {
+  LOAD,
+  UPDATE,
+  SAVE,
+  ARCHIVE,
+  RESET_EFFECT,
+  SHOW_MESSAGE,
+  HIDE_MESSAGE,
+}
+
+interface Action<ActionType, Payload = null> {
+  type: ActionType;
+  payload: Payload;
+}
+
+type LoadAction = Action<ActionType.LOAD, { content: string }>;
+type UpdateAction = Action<
+  ActionType.UPDATE,
+  { content: string; todoList: string[]; doneList: string[] }
+>;
+type SaveAction = Action<ActionType.SAVE, null>;
+type ArchiveAction = Action<
+  ActionType.ARCHIVE,
+  { archiveContentInfo: ArchiveContentInfo }
+>;
+type ResetEffectAction = Action<ActionType.RESET_EFFECT, null>;
+type ShowMessageAction = Action<ActionType.SHOW_MESSAGE, { message: string }>;
+type HideMessageAction = Action<ActionType.HIDE_MESSAGE, null>;
+
+type ToDoAction =
+  | LoadAction
+  | UpdateAction
+  | SaveAction
+  | ArchiveAction
+  | ResetEffectAction
+  | ShowMessageAction
+  | HideMessageAction;
 
 const SAVE_DELAY_MS = 5000;
 
-const initialState = {
+interface AppState {
+  init: boolean;
+  content: string;
+  saveContent: string | null;
+  archiveContentInfo: ArchiveContentInfo | null;
+  todoList: string[];
+  doneList: string[];
+  message: string;
+  isShowMessage: boolean;
+}
+
+const initialState: AppState = {
   init: true,
   content: "",
   saveContent: null,
-  archiveContent: null,
+  archiveContentInfo: null,
   todoList: [],
   doneList: [],
   message: "",
   isShowMessage: false,
 };
 
-const reducer = (state, action) => {
+const reducer = (state: AppState, action: ToDoAction): AppState => {
   switch (action.type) {
     case ActionType.LOAD:
       return {
         ...state,
-        content: action.content,
+        content: action.payload.content,
       };
     case ActionType.UPDATE:
       return {
         ...state,
-        content: action.content,
-        todoList: action.todoList,
-        doneList: action.doneList,
+        content: action.payload.content,
+        todoList: action.payload.todoList,
+        doneList: action.payload.doneList,
       };
     case ActionType.SAVE:
       if (state.init) {
@@ -55,18 +94,18 @@ const reducer = (state, action) => {
     case ActionType.ARCHIVE:
       return {
         ...state,
-        archiveContent: action.archiveContent,
+        archiveContentInfo: action.payload.archiveContentInfo,
       };
     case ActionType.RESET_EFFECT:
       return {
         ...state,
         saveContent: null,
-        archiveContent: null,
+        archiveContentInfo: null,
       };
     case ActionType.SHOW_MESSAGE:
       return {
         ...state,
-        message: action.message,
+        message: action.payload.message,
         isShowMessage: true,
       };
     case ActionType.HIDE_MESSAGE:
@@ -79,41 +118,50 @@ const reducer = (state, action) => {
   }
 };
 
-const App = () => {
+const App: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   useEffect(() => {
-    window.electronAPI.on("did-finish-load-todotxt-file", (event, content) => {
-      dispatch({
-        type: ActionType.LOAD,
-        content: content,
-      });
-    });
     window.electronAPI.on(
       "did-finish-load-todotxt-file",
-      (event, content, loadSuccess) => {
+      (event, content: string) => {
+        dispatch({
+          type: ActionType.LOAD,
+          payload: {
+            content: content,
+          },
+        });
+      }
+    );
+    window.electronAPI.on(
+      "did-finish-load-todotxt-file",
+      (event, content: string, loadSuccess: boolean) => {
         if (loadSuccess) {
           dispatch({
             type: ActionType.LOAD,
-            content: content,
+            payload: {
+              content: content,
+            },
           });
         } else {
           dispatch({
             type: ActionType.SHOW_MESSAGE,
-            message: "load failed",
+            payload: {
+              message: "load failed",
+            },
           });
         }
       }
     );
   }, []);
 
-  const timerId = useRef(null);
+  const timerId = useRef<NodeJS.Timeout | null>(null!);
   const saveTimer = useCallback(() => {
     if (timerId.current) {
       clearTimeout(timerId.current);
     }
     timerId.current = setTimeout(() => {
       timerId.current = null;
-      dispatch({ type: ActionType.SAVE });
+      dispatch({ type: ActionType.SAVE, payload: null });
     }, SAVE_DELAY_MS);
   }, []);
 
@@ -121,19 +169,25 @@ const App = () => {
     window.electronAPI.on("save-success-reply", (event, err) => {
       dispatch({
         type: ActionType.SHOW_MESSAGE,
-        message: "saved",
+        payload: {
+          message: "saved",
+        },
       });
       dispatch({
         type: ActionType.RESET_EFFECT,
+        payload: null,
       });
     });
     window.electronAPI.on("save-failed-reply", (event, err) => {
       dispatch({
         type: ActionType.SHOW_MESSAGE,
-        message: "save failed",
+        payload: {
+          message: "save failed",
+        },
       });
       dispatch({
         type: ActionType.RESET_EFFECT,
+        payload: null,
       });
     });
   }, []);
@@ -153,16 +207,18 @@ const App = () => {
   }, [state.saveContent]);
 
   useEffect(() => {
-    if (!state.archiveContent) {
+    if (!state.archiveContentInfo) {
       return;
     }
-    let message;
-    if (window.electronAPI.archive(state.archiveContent.doneContent)) {
+    let message: string;
+    if (window.electronAPI.archive(state.archiveContentInfo.doneContent)) {
       dispatch({
         type: ActionType.UPDATE,
-        content: state.archiveContent.content,
-        todoList: state.archiveContent.todoList,
-        doneList: state.archiveContent.doneList,
+        payload: {
+          content: state.archiveContentInfo.content,
+          todoList: state.archiveContentInfo.todoList,
+          doneList: state.archiveContentInfo.doneList,
+        },
       });
       message = "archived";
     } else {
@@ -170,12 +226,15 @@ const App = () => {
     }
     dispatch({
       type: ActionType.SHOW_MESSAGE,
-      message: message,
+      payload: {
+        message: message,
+      },
     });
     dispatch({
       type: ActionType.RESET_EFFECT,
+      payload: null,
     });
-  }, [state.archiveContent]);
+  }, [state.archiveContentInfo]);
 
   return (
     <div className="App">
@@ -183,20 +242,19 @@ const App = () => {
         onChange={(content, todoList, doneList) => {
           dispatch({
             type: ActionType.UPDATE,
-            content: content,
-            todoList: todoList,
-            doneList: doneList,
-          });
-          saveTimer();
-        }}
-        onArchive={(doneContent, content, todoList, doneList) => {
-          dispatch({
-            type: ActionType.ARCHIVE,
-            archiveContent: {
-              doneContent: doneContent,
+            payload: {
               content: content,
               todoList: todoList,
               doneList: doneList,
+            },
+          });
+          saveTimer();
+        }}
+        onArchive={(archiveContentInfo) => {
+          dispatch({
+            type: ActionType.ARCHIVE,
+            payload: {
+              archiveContentInfo: archiveContentInfo,
             },
           });
         }}
@@ -204,9 +262,12 @@ const App = () => {
       />
       <footer>
         <MessageArea
-          onClose={() => dispatch({ type: ActionType.HIDE_MESSAGE })}
+          onClose={() =>
+            dispatch({ type: ActionType.HIDE_MESSAGE, payload: null })
+          }
           message={state.message}
-          show={state.isShowMessage} hideDurationMsec={undefined}        />
+          show={state.isShowMessage}
+        />
       </footer>
     </div>
   );

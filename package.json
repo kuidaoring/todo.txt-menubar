@@ -12,6 +12,7 @@
     "@codemirror/language": "^0.19.7",
     "@codemirror/state": "^0.19.6",
     "@codemirror/view": "^0.19.42",
+    "@lezer/lr": "^0.15.8",
     "@replit/codemirror-vim": "^0.19.0",
     "@testing-library/jest-dom": "^5.16.2",
     "@testing-library/react": "^12.1.2",

@@ -5,11 +5,12 @@ import { lineNumbers } from "@codemirror/gutter";
 import { history } from "@codemirror/history";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
-import { vim, Vim } from "@replit/codemirror-vim";
+import { CodeMirror, vim, Vim } from "@replit/codemirror-vim";
 import { format, addDays, parse, subDays } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 import React from "react";
+import { Line } from "@codemirror/text";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -49,19 +50,22 @@ const themeMap = {
   dark: solarizedDark,
 };
 
-const getCurrentLine = (state) => {
+const getCurrentLine = (state: EditorState): Line | undefined => {
   return state.selection.ranges
     .filter((range) => range.empty)
     .map((range) => state.doc.lineAt(range.head))
     .at(0);
 };
 
-const isTaskDone = (line) => {
+const isTaskDone = (line: string): boolean => {
   return line.startsWith("x ");
 };
 
-const handleMarkAsDone = (cm) => {
-  const line = getCurrentLine(cm.cm6.viewState.state);
+const handleMarkAsDone = (cm: CodeMirror): void => {
+  const line = getCurrentLine(cm.cm6.state);
+  if (!line) {
+    return;
+  }
   if (isTaskDone(line.text)) {
     unMarkAsDone(line, cm.cm6);
   } else {
@@ -69,7 +73,7 @@ const handleMarkAsDone = (cm) => {
   }
 };
 
-const markAsDone = (line, view) => {
+const markAsDone = (line: Line, view: EditorView): void => {
   const dateWord = format(new Date(), "yyyy-LL-dd");
   const matchPriority = /^\(([A-Za-z])\) */.exec(line.text);
   const priorityTrimmed = line.text.replace(/^\([A-Za-z]\) /, "");
@@ -85,7 +89,7 @@ const markAsDone = (line, view) => {
   });
 };
 
-const unMarkAsDone = (line, view) => {
+const unMarkAsDone = (line: Line, view: EditorView): void => {
   const matchPriorityLabel = / pri:([A-Za-z])(\s|$)/.exec(line.text);
   const priorityWord =
     matchPriorityLabel && matchPriorityLabel[1]
@@ -102,9 +106,15 @@ const unMarkAsDone = (line, view) => {
   });
 };
 
-const handleMarkPriority = (cm, params) => {
+const handleMarkPriority = (
+  cm: CodeMirror,
+  params: { args: string[] }
+): void => {
   const inputPriority = params.args[0];
-  const line = getCurrentLine(cm.cm6.viewState.state);
+  const line = getCurrentLine(cm.cm6.state);
+  if (!line) {
+    return;
+  }
   if (isTaskDone(line.text)) {
     return;
   }
@@ -116,7 +126,7 @@ const handleMarkPriority = (cm, params) => {
   }
 };
 
-const markPriority = (priority, line, view) => {
+const markPriority = (priority: string, line: Line, view: EditorView): void => {
   let to = line.from;
   if (line.text.match(/^\([A-Z]\) /)) {
     to += 4;
@@ -130,7 +140,11 @@ const markPriority = (priority, line, view) => {
   });
 };
 
-const unMarkPriority = (priority, line, view) => {
+const unMarkPriority = (
+  priority: string,
+  line: Line,
+  view: EditorView
+): void => {
   const regexp = new RegExp(`^\\(${priority}\\) `);
   const result = line.text.replace(regexp, "");
   view.dispatch({
@@ -142,8 +156,14 @@ const unMarkPriority = (priority, line, view) => {
   });
 };
 
-const handleChangePriority = (cm, params) => {
-  const line = getCurrentLine(cm.cm6.viewState.state);
+const handleChangePriority = (
+  cm: CodeMirror,
+  params: { args: string[] }
+): void => {
+  const line = getCurrentLine(cm.cm6.state);
+  if (!line) {
+    return;
+  }
   const matches = line.text.match(/^\(([A-Za-z])\) /);
   if (!matches) {
     return;
@@ -152,9 +172,9 @@ const handleChangePriority = (cm, params) => {
   const option = params.args[0] ?? null;
   const charCode =
     option === "inc"
-      ? currentPriority.charCodeAt() - 1
+      ? currentPriority.charCodeAt(0) - 1
       : option === "dec"
-      ? currentPriority.charCodeAt() + 1
+      ? currentPriority.charCodeAt(0) + 1
       : -1;
   if (charCode < "A".charCodeAt(0) || charCode > "Z".charCodeAt(0)) {
     return;
@@ -169,7 +189,7 @@ const handleChangePriority = (cm, params) => {
   });
 };
 
-const handleSortByPriority = (cm) => {
+const handleSortByPriority = (cm: CodeMirror): void => {
   const lines = cm.cm6.state.doc.toString().split("\n");
   lines.sort(compareTaskByPriority);
   cm.cm6.dispatch({
@@ -181,7 +201,7 @@ const handleSortByPriority = (cm) => {
   });
 };
 
-const compareTaskByPriority = (a, b) => {
+const compareTaskByPriority = (a: string, b: string): number => {
   const isATaskDone = isTaskDone(a);
   const isBTaskDone = isTaskDone(b);
   if (isATaskDone && isBTaskDone) {
@@ -215,7 +235,7 @@ const compareTaskByPriority = (a, b) => {
   return 1;
 };
 
-const compareTaskByDueDate = (a, b) => {
+const compareTaskByDueDate = (a: string, b: string): number => {
   const aMatches = a.match(/due:(\d{4}-\d{2}-\d{2})/);
   const bMatches = b.match(/due:(\d{4}-\d{2}-\d{2})/);
   if (!aMatches && !bMatches) {
@@ -236,7 +256,7 @@ const compareTaskByDueDate = (a, b) => {
   return 1;
 };
 
-const handleArchiveDone = (cm, onArchive) => {
+const handleArchiveDone = (cm: CodeMirror, onArchive: OnArchiveFunc): void => {
   const currentLines = cm.cm6.state.doc.toString().split("\n");
   const doneContent = currentLines
     .filter((line) => isTaskDone(line))
@@ -247,19 +267,30 @@ const handleArchiveDone = (cm, onArchive) => {
     (line) => !isTaskDone(line) && !line.match(/^\s*$/)
   );
   const doneList = lines.filter((line) => isTaskDone(line));
-  onArchive(doneContent, content, todoList, doneList);
+  onArchive({
+    doneContent: doneContent,
+    content: content,
+    todoList: todoList,
+    doneList: doneList,
+  });
 };
 
-const handleChangeDueDate = (cm, params) => {
-  const line = getCurrentLine(cm.cm6.viewState.state);
+const handleChangeDueDate = (
+  cm: CodeMirror,
+  params: { args: string[] }
+): void => {
+  const line = getCurrentLine(cm.cm6.state);
+  if (!line) {
+    return;
+  }
   if (isTaskDone(line.text)) {
     return;
   }
   const incrementOrDecrementFunc =
     params.args[0] === "inc"
-      ? (date) => addDays(date, 1)
+      ? (date: Date): Date => addDays(date, 1)
       : params.args[0] === "dec"
-      ? (date) => subDays(date, 1)
+      ? (date: Date): Date => subDays(date, 1)
       : null;
   if (!incrementOrDecrementFunc) {
     return;
@@ -295,12 +326,21 @@ const handleChangeDueDate = (cm, params) => {
   }
 };
 
-const Editor = ({ onChange, onArchive, content }) => {
-  const [theme, setTheme] = useState(isDark() ? "dark" : "light");
-  const viewRef = useRef(null);
-  const containerRef = useRef(null);
-  const onArchiveRef = useRef(null);
-  onArchiveRef.current = onArchive;
+interface Props {
+  onChange: (content: string, todoList: string[], doneList: string[]) => void;
+  onArchive: OnArchiveFunc;
+  content: string;
+}
+
+type OnArchiveFunc = (archiveContentInfo: ArchiveContentInfo) => void;
+
+const Editor: React.FC<Props> = ({ onChange, onArchive, content }) => {
+  const [theme, setTheme] = useState<"dark" | "light">(
+    isDark() ? "dark" : "light"
+  );
+  const viewRef = useRef<EditorView>(null!);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onArchiveRef = useRef<OnArchiveFunc>(onArchive);
 
   useEffect(() => {
     window
@@ -330,7 +370,7 @@ const Editor = ({ onChange, onArchive, content }) => {
               (line) => !isTaskDone(line) && !line.match(/^\s*$/)
             );
             const doneList = lines.filter((line) => isTaskDone(line));
-            onChange && onChange(content, todoList, doneList);
+            onChange(content, todoList, doneList);
           }
         }),
       ];
@@ -384,7 +424,7 @@ const Editor = ({ onChange, onArchive, content }) => {
     Vim.defineEx(
       "todotxtArchiveDone",
       null,
-      (cm) =>
+      (cm: CodeMirror) =>
         onArchiveRef.current && handleArchiveDone(cm, onArchiveRef.current)
     );
     Vim.map(",p", ":todotxtChangeDueDate inc", "normal");
