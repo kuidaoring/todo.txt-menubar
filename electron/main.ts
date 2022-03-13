@@ -2,15 +2,9 @@ import { app, nativeTheme, BrowserWindow, Tray, ipcMain } from "electron";
 import path from "path";
 import isDev from "electron-is-dev";
 import fs from "fs/promises";
+import Store from "electron-store";
+import { Config, defaults } from "./config";
 
-const defaultTodoTxtPath = path.join(
-  (process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"]) as string,
-  "todo.txt"
-);
-const defaultDoneTxtPath = path.join(
-  (process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"]) as string,
-  "done.txt"
-);
 const darkModeIcon = path.join(
   __dirname,
   "../asset/outline_checklist_white_24dp.png"
@@ -26,18 +20,24 @@ const getIconPath = () => {
 const main = async () => {
   await app.whenReady();
 
+  const store = new Store<Config>({ defaults: defaults });
+  const config: Config = {
+    file: store.get("file"),
+    window: store.get("window"),
+  };
+
   let content: string;
   let loadSuccess = true;
   try {
-    content = await fs.readFile(defaultTodoTxtPath, "utf-8");
+    content = await fs.readFile(config.file.todoTxtPath, "utf-8");
   } catch (err) {
     content = "";
     loadSuccess = false;
   }
 
   const mainWindow = new BrowserWindow({
-    width: 600,
-    height: 300,
+    width: config.window.width,
+    height: config.window.height,
     vibrancy: "under-window",
     visualEffectState: "active",
     frame: false,
@@ -85,7 +85,7 @@ const main = async () => {
   });
   ipcMain.on("save", async (event, content) => {
     try {
-      await fs.writeFile(defaultTodoTxtPath, content);
+      await fs.writeFile(config.file.todoTxtPath, content);
       event.reply("save-success-reply");
     } catch (err) {
       console.log(`save failed: ${err}`);
@@ -94,7 +94,7 @@ const main = async () => {
   });
   ipcMain.on("archive", async (event, content) => {
     try {
-      await fs.appendFile(defaultDoneTxtPath, `${content}\n`);
+      await fs.appendFile(config.file.doneTxtPath, `${content}\n`);
       event.returnValue = true;
     } catch (err) {
       console.log(`archive failed: ${err}`);

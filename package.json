@@ -1,5 +1,5 @@
 {
-  "name": "todo-txt-app",
+  "name": "todo.txt-menubar",
   "version": "0.1.0",
   "private": true,
   "main": "dist/main.js",
@@ -21,6 +21,7 @@
     "cm6-theme-solarized-light": "^0.1.0",
     "date-fns": "^2.28.0",
     "electron-is-dev": "^2.0.0",
+    "electron-store": "^8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "5.0.0",
