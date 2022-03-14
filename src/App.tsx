@@ -1,5 +1,6 @@
 import React from "react";
 import { useEffect, useRef, useCallback, useReducer } from "react";
+import { EditorConfig } from "../electron/config";
 import "./App.css";
 import Editor from "./Editor";
 import MessageArea from "./MessageArea";
@@ -12,6 +13,7 @@ enum ActionType {
   RESET_EFFECT,
   SHOW_MESSAGE,
   HIDE_MESSAGE,
+  LOAD_EDITOR_CONFIG,
 }
 
 interface Action<ActionType, Payload = null> {
@@ -32,6 +34,10 @@ type ArchiveAction = Action<
 type ResetEffectAction = Action<ActionType.RESET_EFFECT, null>;
 type ShowMessageAction = Action<ActionType.SHOW_MESSAGE, { message: string }>;
 type HideMessageAction = Action<ActionType.HIDE_MESSAGE, null>;
+type LoadEditorConfigAction = Action<
+  ActionType.LOAD_EDITOR_CONFIG,
+  { editorConfig: EditorConfig }
+>;
 
 type ToDoAction =
   | LoadAction
@@ -40,7 +46,8 @@ type ToDoAction =
   | ArchiveAction
   | ResetEffectAction
   | ShowMessageAction
-  | HideMessageAction;
+  | HideMessageAction
+  | LoadEditorConfigAction;
 
 const SAVE_DELAY_MS = 5000;
 
@@ -53,6 +60,7 @@ interface AppState {
   doneList: string[];
   message: string;
   isShowMessage: boolean;
+  editorConfig: EditorConfig | null;
 }
 
 const initialState: AppState = {
@@ -64,6 +72,7 @@ const initialState: AppState = {
   doneList: [],
   message: "",
   isShowMessage: false,
+  editorConfig: null,
 };
 
 const reducer = (state: AppState, action: ToDoAction): AppState => {
@@ -112,6 +121,11 @@ const reducer = (state: AppState, action: ToDoAction): AppState => {
       return {
         ...state,
         isShowMessage: false,
+      };
+    case ActionType.LOAD_EDITOR_CONFIG:
+      return {
+        ...state,
+        editorConfig: action.payload.editorConfig,
       };
     default:
       return state;
@@ -190,6 +204,13 @@ const App: React.FC = () => {
         payload: null,
       });
     });
+    (async () => {
+      const editoConfig = await window.electronAPI.getEditorConfig();
+      dispatch({
+        type: ActionType.LOAD_EDITOR_CONFIG,
+        payload: { editorConfig: editoConfig },
+      });
+    })();
   }, []);
 
   useEffect(() => {
@@ -238,28 +259,31 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <Editor
-        onChange={(content, todoList, doneList) => {
-          dispatch({
-            type: ActionType.UPDATE,
-            payload: {
-              content: content,
-              todoList: todoList,
-              doneList: doneList,
-            },
-          });
-          saveTimer();
-        }}
-        onArchive={(archiveContentInfo) => {
-          dispatch({
-            type: ActionType.ARCHIVE,
-            payload: {
-              archiveContentInfo: archiveContentInfo,
-            },
-          });
-        }}
-        content={state.content}
-      />
+      {state.editorConfig && (
+        <Editor
+          onChange={(content, todoList, doneList) => {
+            dispatch({
+              type: ActionType.UPDATE,
+              payload: {
+                content: content,
+                todoList: todoList,
+                doneList: doneList,
+              },
+            });
+            saveTimer();
+          }}
+          onArchive={(archiveContentInfo) => {
+            dispatch({
+              type: ActionType.ARCHIVE,
+              payload: {
+                archiveContentInfo: archiveContentInfo,
+              },
+            });
+          }}
+          content={state.content}
+          lineWrapping={state.editorConfig.lineWrapping}
+        />
+      )}
       <footer>
         <MessageArea
           onClose={() =>

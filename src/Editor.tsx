@@ -352,11 +352,17 @@ interface Props {
   onChange: (content: string, todoList: string[], doneList: string[]) => void;
   onArchive: OnArchiveFunc;
   content: string;
+  lineWrapping: boolean;
 }
 
 type OnArchiveFunc = (archiveContentInfo: ArchiveContentInfo) => void;
 
-const Editor: React.FC<Props> = ({ onChange, onArchive, content }) => {
+const Editor: React.FC<Props> = ({
+  onChange,
+  onArchive,
+  content,
+  lineWrapping,
+}) => {
   const [theme, setTheme] = useState<"dark" | "light">(
     isDark() ? "dark" : "light"
   );
@@ -375,7 +381,7 @@ const Editor: React.FC<Props> = ({ onChange, onArchive, content }) => {
   useEffect(() => {
     if (containerRef.current) {
       const [vimStyle, vimPlugin, , vimPanelState] = vim() as Extension[];
-      const extensions = [
+      let extensions = [
         history(),
         lineNumbers(),
         vimStyle,
@@ -396,6 +402,9 @@ const Editor: React.FC<Props> = ({ onChange, onArchive, content }) => {
           }
         }),
       ];
+      if (lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
       if (!viewRef.current) {
         const startState = EditorState.create({
           doc: "",

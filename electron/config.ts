@@ -9,7 +9,7 @@ const defaultDoneTxtPath = path.join(
   "done.txt"
 );
 
-export interface Config {
+export type Config = {
   file: {
     todoTxtPath: string;
     doneTxtPath: string;
@@ -18,7 +18,10 @@ export interface Config {
     width: number;
     height: number;
   };
-}
+  editor: EditorConfig;
+};
+
+export type EditorConfig = { lineWrapping: boolean };
 
 export const defaults = {
   file: {
@@ -28,5 +31,8 @@ export const defaults = {
   window: {
     width: 600,
     height: 300,
+  },
+  editor: {
+    lineWrapping: true,
   },
 };

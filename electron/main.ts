@@ -24,6 +24,7 @@ const main = async () => {
   const config: Config = {
     file: store.get("file"),
     window: store.get("window"),
+    editor: store.get("editor"),
   };
 
   let content: string;
@@ -79,6 +80,10 @@ const main = async () => {
   });
 
   nativeTheme.on("updated", () => tray.setImage(getIconPath()));
+
+  ipcMain.handle("get-editor-config", () => {
+    return config.editor;
+  });
 
   ipcMain.on("set-task-count", (event, todoCount, doneCount) => {
     tray.setTitle(`📝 ${todoCount} / ✅ ${doneCount}`);
