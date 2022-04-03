@@ -11,6 +11,7 @@ import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 import React from "react";
 import { Line } from "@codemirror/text";
+import { Task } from "./model/task";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -88,42 +89,11 @@ const handleMarkAsDone = (cm: CodeMirror): void => {
   if (!line) {
     return;
   }
-  if (isTaskDone(line.text)) {
-    unMarkAsDone(line, cm.cm6);
-  } else {
-    markAsDone(line, cm.cm6);
-  }
-};
-
-const markAsDone = (line: Line, view: EditorView): void => {
-  const dateWord = format(new Date(), "yyyy-LL-dd");
-  const matchPriority = /^\(([A-Za-z])\) */.exec(line.text);
-  const priorityTrimmed = line.text.replace(/^\([A-Za-z]\) /, "");
-  const priorityLabel =
-    matchPriority && matchPriority[1] ? ` pri:${matchPriority[1]}` : "";
-  const result = `x ${dateWord} ${priorityTrimmed}${priorityLabel}`;
-  view.dispatch({
+  cm.cm6.dispatch({
     changes: {
       from: line.from,
       to: line.to,
-      insert: result,
-    },
-  });
-};
-
-const unMarkAsDone = (line: Line, view: EditorView): void => {
-  const matchPriorityLabel = / pri:([A-Za-z])(\s|$)/.exec(line.text);
-  const priorityWord =
-    matchPriorityLabel && matchPriorityLabel[1]
-      ? `(${matchPriorityLabel[1]}) `
-      : "";
-  const priorityTrimmed = line.text.replace(/ pri:([A-Za-z])(\s|$)?/, "");
-  const doneTrimmed = priorityTrimmed.replace(/^x (\d{4}-\d{2}-\d{2} )?/, "");
-  view.dispatch({
-    changes: {
-      from: line.from,
-      to: line.to,
-      insert: `${priorityWord}${doneTrimmed}`,
+      insert: Task.build(line.text).toggleAsDone().content,
     },
   });
 };
