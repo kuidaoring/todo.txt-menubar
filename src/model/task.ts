@@ -41,9 +41,7 @@ export class Task {
 
   markAsDone() {
     let content = this.content;
-    let labels = this.labels;
     if (this.priority.value) {
-      labels.push(this.priority.getLabel()!);
       content = content.slice(4) + ` ${this.priority.getLabelString()}`;
     }
 
@@ -51,43 +49,38 @@ export class Task {
     const dateWord = format(doneDate, "yyyy-LL-dd");
     content = `x ${dateWord} ${content}`;
 
-    return new Task(
-      content,
-      !this.isDone,
-      this.priority,
-      this.projects,
-      this.contexts,
-      labels,
-      this.dueDate,
-      doneDate
-    );
+    return Task.build(content);
   }
 
   unMarkAsDone() {
     let content = this.content.replace(/^x (\d{4}-\d{2}-\d{2} )?/, "");
 
     const priorityLabel = this.labels.find((l) => l.key === "pri");
-    let labels = this.labels;
     if (priorityLabel) {
       content = `(${priorityLabel.value}) ${content.replace(
         ` pri:${priorityLabel.value}`,
         ""
       )}`;
-      labels = labels.filter(
-        (l) => l.key !== "pri" || l.value !== priorityLabel.value
-      );
     }
 
-    return new Task(
-      content,
-      !this.isDone,
-      new Priority(priorityLabel?.value ?? null),
-      this.projects,
-      this.contexts,
-      labels,
-      this.dueDate,
-      null
-    );
+    return Task.build(content);
+  }
+
+  markPriority(value: string) {
+    if (this.isDone) {
+      return this;
+    }
+
+    const priority = new Priority(value);
+    let content = this.content;
+    if (this.priority.value) {
+      content = content.slice(4);
+    }
+    if (priority.value) {
+      content = `(${priority.value}) content`;
+    }
+
+    return Task.build(content);
   }
 
   static build(content: string): Task {
