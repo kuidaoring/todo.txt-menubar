@@ -108,8 +108,12 @@ const main = async () => {
   });
 };
 
-// disable navigation
 app.on("web-contents-created", (event, contents) => {
+  // disable window open
+  contents.setWindowOpenHandler(({ url }) => {
+    return { action: "deny" };
+  });
+  // disable navigation
   contents.on("will-navigate", (event, url) => {
     event.preventDefault();
   });
