@@ -2,7 +2,7 @@
   "name": "todo.txt-menubar",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/main.js",
+  "main": "build/electron/electron.js",
   "homepage": "./",
   "dependencies": {
     "@codemirror/basic-setup": "^0.19.1",
@@ -20,7 +20,6 @@
     "cm6-theme-solarized-dark": "^0.1.0",
     "cm6-theme-solarized-light": "^0.1.0",
     "date-fns": "^2.28.0",
-    "electron-is-dev": "^2.0.0",
     "electron-store": "^8.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -29,16 +28,12 @@
   },
   "scripts": {
     "lezer-generator": "lezer-generator",
-    "react-start": "cross-env BROWSER=none react-scripts start",
-    "react-build": "react-scripts build",
-    "react-test": "react-scripts test",
-    "react-eject": "react-scripts eject",
-    "electron-dev": "run-s electron-tsc electron-start",
-    "electron-tsc": "tsc -p tsconfig.main.json",
-    "electron-start": "wait-on http://localhost:3000/ && electron .",
-    "electron-build": "electron-builder",
-    "start": "run-p react-start electron-dev",
-    "build": "run-s react-build electron-build"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && tsc -p electron -w\" \"wait-on http://localhost:3000 && tsc -p electron && electron .\"",
+    "electron:build:mac": "npm run build && tsc -p electron && electron-builder --mac --x64"
   },
   "eslintConfig": {
     "extends": [
@@ -48,25 +43,28 @@
   },
   "browserslist": {
     "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+      "last 1 electron version"
     ],
     "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+      "last 1 electron version"
     ]
   },
   "devDependencies": {
     "@lezer/generator": "^0.15.4",
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.13",
+    "concurrently": "^7.4.0",
     "cross-env": "^7.0.3",
     "electron": "^18.0.3",
     "electron-builder": "^22.14.13",
-    "npm-run-all": "^4.1.5",
     "typescript": "^4.6.2",
     "wait-on": "^6.0.0"
+  },
+  "build": {
+    "extends": null,
+    "files": [
+      "build/**/*",
+      "asset/*"
+    ]
   }
 }

@@ -1,17 +1,16 @@
 import { app, nativeTheme, BrowserWindow, Tray, ipcMain } from "electron";
 import path from "path";
-import isDev from "electron-is-dev";
 import fs from "fs/promises";
 import Store from "electron-store";
 import { Config, defaults } from "./config";
 
 const darkModeIcon = path.join(
   __dirname,
-  "../asset/outline_checklist_white_24dp.png"
+  "../../asset/outline_checklist_white_24dp.png"
 );
 const lightModeIcon = path.join(
   __dirname,
-  "../asset/outline_checklist_black_24dp.png"
+  "../../asset/outline_checklist_black_24dp.png"
 );
 const getIconPath = () => {
   return nativeTheme.shouldUseDarkColors ? darkModeIcon : lightModeIcon;
@@ -49,10 +48,14 @@ const main = async () => {
   });
 
   mainWindow.loadURL(
-    isDev
-      ? "http://localhost:3000"
-      : `file://${path.join(__dirname, "../public/index.html")}`
+    app.isPackaged
+      ? `file://${path.join(__dirname, "../index.html")}`
+      : "http://localhost:3000"
   );
+
+  if (app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
 
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.send(
