@@ -35,11 +35,11 @@ export class Task {
     this.doneDate = doneDate;
   }
 
-  toggleAsDone() {
+  toggleAsDone(): Task {
     return this.isDone ? this.unMarkAsDone() : this.markAsDone();
   }
 
-  markAsDone() {
+  markAsDone(): Task {
     let content = this.content;
     if (this.priority.value) {
       content = content.slice(4) + ` ${this.priority.getLabelString()}`;
@@ -52,7 +52,7 @@ export class Task {
     return Task.build(content);
   }
 
-  unMarkAsDone() {
+  unMarkAsDone(): Task {
     let content = this.content.replace(/^x (\d{4}-\d{2}-\d{2} )?/, "");
 
     const priorityLabel = this.labels.find((l) => l.key === "pri");
@@ -66,21 +66,49 @@ export class Task {
     return Task.build(content);
   }
 
-  markPriority(value: string) {
+  markPriority(value: string): Task {
     if (this.isDone) {
       return this;
     }
 
     const priority = new Priority(value);
+    if (!priority.value) {
+      return this;
+    }
+
     let content = this.content;
     if (this.priority.value) {
       content = content.slice(4);
     }
-    if (priority.value) {
-      content = `(${priority.value}) content`;
+    if (this.priority.value !== priority.value) {
+      content = `(${priority.value}) ${content}`;
     }
 
     return Task.build(content);
+  }
+
+  incrementPriority(): Task {
+    if (this.isDone) {
+      return this;
+    }
+    const nextPriority = this.priority.increment();
+    if (!nextPriority.value) {
+      return this;
+    }
+    return this.markPriority(nextPriority.value);
+  }
+
+  decrementPriority(): Task {
+    if (this.isDone) {
+      return this;
+    }
+
+    const nextPriority = this.priority.decrement();
+    if (!nextPriority.value) {
+      return this;
+    }
+
+    return this.markPriority(nextPriority.value);
   }
 
   static build(content: string): Task {
@@ -130,6 +158,29 @@ class Priority {
     } else {
       this.value = null;
     }
+  }
+
+  increment(): Priority {
+    if (!this.value) {
+      return this;
+    }
+    const nextPriorityCharCode = this.value.charCodeAt(0) - 1;
+    if (nextPriorityCharCode < "A".charCodeAt(0)) {
+      return this;
+    }
+    return new Priority(String.fromCharCode(nextPriorityCharCode));
+  }
+
+  decrement(): Priority {
+    if (!this.value) {
+      return this;
+    }
+
+    const nextPriorityCharCode = this.value.charCodeAt(0) + 1;
+    if (nextPriorityCharCode > "Z".charCodeAt(0)) {
+      return this;
+    }
+    return new Priority(String.fromCharCode(nextPriorityCharCode));
   }
 
   getLabelString() {

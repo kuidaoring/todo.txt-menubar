@@ -81,7 +81,7 @@ const getCurrentLine = (state: EditorState): Line | undefined => {
 };
 
 const isTaskDone = (line: string): boolean => {
-  return line.startsWith("x ");
+  return Task.build(line).isDone;
 };
 
 const handleMarkAsDone = (cm: CodeMirror): void => {
@@ -107,43 +107,12 @@ const handleMarkPriority = (
   if (!line) {
     return;
   }
-  if (isTaskDone(line.text)) {
-    return;
-  }
-  const regexp = new RegExp(`^\\(${inputPriority}\\) `);
-  if (line.text.match(regexp)) {
-    unMarkPriority(inputPriority, line, cm.cm6);
-  } else {
-    markPriority(inputPriority, line, cm.cm6);
-  }
-};
 
-const markPriority = (priority: string, line: Line, view: EditorView): void => {
-  let to = line.from;
-  if (line.text.match(/^\([A-Z]\) /)) {
-    to += 4;
-  }
-  view.dispatch({
-    changes: {
-      from: line.from,
-      to: to,
-      insert: `(${priority}) `,
-    },
-  });
-};
-
-const unMarkPriority = (
-  priority: string,
-  line: Line,
-  view: EditorView
-): void => {
-  const regexp = new RegExp(`^\\(${priority}\\) `);
-  const result = line.text.replace(regexp, "");
-  view.dispatch({
+  cm.cm6.dispatch({
     changes: {
       from: line.from,
       to: line.to,
-      insert: result,
+      insert: Task.build(line.text).markPriority(inputPriority).content,
     },
   });
 };
@@ -156,27 +125,18 @@ const handleChangePriority = (
   if (!line) {
     return;
   }
-  const matches = line.text.match(/^\(([A-Za-z])\) /);
-  if (!matches) {
-    return;
-  }
-  const currentPriority = matches[1].toUpperCase();
   const option = params.args[0] ?? null;
-  const charCode =
-    option === "inc"
-      ? currentPriority.charCodeAt(0) - 1
-      : option === "dec"
-      ? currentPriority.charCodeAt(0) + 1
-      : -1;
-  if (charCode < "A".charCodeAt(0) || charCode > "Z".charCodeAt(0)) {
-    return;
+  let task = Task.build(line.text);
+  if (option === "inc") {
+    task = task.incrementPriority();
+  } else if (option === "dec") {
+    task = task.decrementPriority();
   }
-
   cm.cm6.dispatch({
     changes: {
-      from: line.from + 1,
-      to: line.from + 2,
-      insert: String.fromCharCode(charCode),
+      from: line.from,
+      to: line.to,
+      insert: task.content,
     },
   });
 };
