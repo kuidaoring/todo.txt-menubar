@@ -155,21 +155,15 @@ const handleSortByPriority = (cm: CodeMirror): void => {
 };
 
 const handleArchiveDone = (cm: CodeMirror, onArchive: OnArchiveFunc): void => {
-  const currentLines = cm.cm6.state.doc.toString().split("\n");
-  const doneContent = currentLines
-    .filter((line) => isTaskDone(line))
-    .join("\n");
-  const content = currentLines.filter((line) => !isTaskDone(line)).join("\n");
-  const lines = content.split("\n");
-  const todoList = lines.filter(
-    (line) => !isTaskDone(line) && !line.match(/^\s*$/)
-  );
-  const doneList = lines.filter((line) => isTaskDone(line));
+  const tasks = cm.cm6.state.doc.toString().split("\n").map(Task.build);
+  const doneTasks = tasks.filter((task) => task.isDone && !task.isEmpty());
+  const todoTasks = tasks.filter((task) => !task.isDone && !task.isEmpty());
+
   onArchive({
-    doneContent: doneContent,
-    content: content,
-    todoList: todoList,
-    doneList: doneList,
+    doneContent: doneTasks.map((task) => task.content).join("\n"),
+    content: todoTasks.map((task) => task.content).join("\n"),
+    doneList: doneTasks.map((task) => task.content),
+    todoList: todoTasks.map((task) => task.content),
   });
 };
 

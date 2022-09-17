@@ -36,6 +36,10 @@ export class Task {
     this.doneDate = doneDate;
   }
 
+  isEmpty(): boolean {
+    return !!this.content.match(/^\s*$/);
+  }
+
   toggleAsDone(): Task {
     return this.isDone ? this.unMarkAsDone() : this.markAsDone();
   }
