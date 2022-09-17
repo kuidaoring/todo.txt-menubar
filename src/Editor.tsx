@@ -12,6 +12,7 @@ import "./Editor.css";
 import React from "react";
 import { Line } from "@codemirror/text";
 import { Task } from "./model/task";
+import compareTask from "./compareTask";
 
 const transparentTheme = EditorView.theme({
   "&": {
@@ -142,70 +143,15 @@ const handleChangePriority = (
 };
 
 const handleSortByPriority = (cm: CodeMirror): void => {
-  const lines = cm.cm6.state.doc.toString().split("\n");
-  lines.sort(compareTaskByPriority);
+  const tasks = cm.cm6.state.doc.toString().split("\n").map(Task.build);
+  tasks.sort(compareTask);
   cm.cm6.dispatch({
     changes: {
       from: 0,
       to: cm.cm6.state.doc.length,
-      insert: lines.join("\n"),
+      insert: tasks.map((task) => task.content).join("\n"),
     },
   });
-};
-
-const compareTaskByPriority = (a: string, b: string): number => {
-  const isATaskDone = isTaskDone(a);
-  const isBTaskDone = isTaskDone(b);
-  if (isATaskDone && isBTaskDone) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (isBTaskDone) {
-    return -1;
-  }
-  if (isATaskDone) {
-    return 1;
-  }
-  const aMatches = a.match(/^\(([A-Za-z])\) /);
-  const bMatches = b.match(/^\(([A-Za-z])\) /);
-  if (!aMatches && !bMatches) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (!bMatches) {
-    return -1;
-  }
-  if (!aMatches) {
-    return 1;
-  }
-  const aPriority = aMatches[1].toUpperCase();
-  const bPriority = bMatches[1].toUpperCase();
-  if (aPriority === bPriority) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (aPriority < bPriority) {
-    return -1;
-  }
-  return 1;
-};
-
-const compareTaskByDueDate = (a: string, b: string): number => {
-  const aMatches = a.match(/due:(\d{4}-\d{2}-\d{2})/);
-  const bMatches = b.match(/due:(\d{4}-\d{2}-\d{2})/);
-  if (!aMatches && !bMatches) {
-    return 0;
-  }
-  if (aMatches && bMatches) {
-    if (aMatches[1] === bMatches[1]) {
-      return 0;
-    }
-    if (aMatches[1] < bMatches[1]) {
-      return -1;
-    }
-    return 1;
-  }
-  if (aMatches) {
-    return -1;
-  }
-  return 1;
 };
 
 const handleArchiveDone = (cm: CodeMirror, onArchive: OnArchiveFunc): void => {
