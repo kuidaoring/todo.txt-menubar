@@ -6,7 +6,6 @@ import { history } from "@codemirror/history";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { CodeMirror, vim, Vim } from "@replit/codemirror-vim";
-import { format, addDays, parse, subDays } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 import React from "react";
@@ -175,47 +174,20 @@ const handleChangeDueDate = (
   if (!line) {
     return;
   }
-  if (isTaskDone(line.text)) {
-    return;
+  const option = params.args[0] ?? null;
+  let task = Task.build(line.text);
+  if (option === "inc") {
+    task = task.incrementDueDate();
+  } else if (option === "dec") {
+    task = task.decrementDueDate();
   }
-  const incrementOrDecrementFunc =
-    params.args[0] === "inc"
-      ? (date: Date): Date => addDays(date, 1)
-      : params.args[0] === "dec"
-      ? (date: Date): Date => subDays(date, 1)
-      : null;
-  if (!incrementOrDecrementFunc) {
-    return;
-  }
-  const dueDateMatch = line.text.match(/due:(\d{4}-\d{2}-\d{2})/);
-  if (!dueDateMatch) {
-    cm.cm6.dispatch({
-      changes: {
-        from: line.to,
-        insert: ` due:${format(
-          incrementOrDecrementFunc(new Date()),
-          "yyyy-LL-dd"
-        )}`,
-      },
-    });
-    return;
-  }
-  try {
-    const parsed = parse(dueDateMatch[1], "yyyy-LL-dd", new Date());
-    const replaced = line.text.replace(
-      `due:${dueDateMatch[1]}`,
-      `due:${format(incrementOrDecrementFunc(parsed), "yyyy-LL-dd")}`
-    );
-    cm.cm6.dispatch({
-      changes: {
-        from: line.from,
-        to: line.to,
-        insert: replaced,
-      },
-    });
-  } catch (err) {
-    return;
-  }
+  cm.cm6.dispatch({
+    changes: {
+      from: line.from,
+      to: line.to,
+      insert: task.content,
+    },
+  });
 };
 
 interface Props {

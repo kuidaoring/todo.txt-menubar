@@ -1,4 +1,4 @@
-import { parse, format } from "date-fns";
+import { parse, format, addDays, subDays } from "date-fns";
 import { Priority } from "./priority";
 
 type Label = {
@@ -114,6 +114,36 @@ export class Task {
     }
 
     return this.markPriority(nextPriority.value);
+  }
+
+  incrementDueDate(): Task {
+    return this.modifyDueDate((date: Date) => {
+      return addDays(date, 1);
+    });
+  }
+
+  decrementDueDate(): Task {
+    return this.modifyDueDate((date: Date) => {
+      return subDays(date, 1);
+    });
+  }
+
+  modifyDueDate(callback: (date: Date) => Date): Task {
+    if (this.isDone) {
+      return this;
+    }
+    let content = this.content;
+    if (!this.dueDate) {
+      content = `${content} due:${format(callback(new Date()), "yyyy-LL-dd")}`;
+    } else {
+      const dueDateString = format(this.dueDate, "yyyy-LL-dd");
+      content = content.replace(
+        `due:${dueDateString}`,
+        `due:${format(callback(this.dueDate), "yyyy-LL-dd")}`
+      );
+    }
+
+    return Task.build(content);
   }
 
   static build(content: string): Task {
