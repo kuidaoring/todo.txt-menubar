@@ -29,10 +29,6 @@ const getCurrentLine = (state: EditorState): Line | undefined => {
     .at(0);
 };
 
-const isTaskDone = (line: string): boolean => {
-  return Task.build(line).isDone;
-};
-
 const handleMarkAsDone = (cm: CodeMirror): void => {
   const line = getCurrentLine(cm.cm6.state);
   if (!line) {
@@ -184,12 +180,18 @@ const Editor: React.FC<Props> = ({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const content = update.state.doc.toString();
-            const lines = content.split("\n");
-            const todoList = lines.filter(
-              (line) => !isTaskDone(line) && !line.match(/^\s*$/)
+            const tasks = content.split("\n").map(Task.build);
+            const todoTasks = tasks.filter(
+              (task) => !task.isDone && !task.isEmpty()
             );
-            const doneList = lines.filter((line) => isTaskDone(line));
-            onChange(content, todoList, doneList);
+            const doneTasks = tasks.filter(
+              (task) => task.isDone && !task.isEmpty()
+            );
+            onChange(
+              content,
+              todoTasks.map((task) => task.content),
+              doneTasks.map((task) => task.content)
+            );
           }
         }),
       ];
