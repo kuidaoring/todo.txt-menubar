@@ -1,4 +1,11 @@
-import { app, nativeTheme, BrowserWindow, Tray, ipcMain } from "electron";
+import {
+  app,
+  nativeTheme,
+  BrowserWindow,
+  Tray,
+  ipcMain,
+  globalShortcut,
+} from "electron";
 import path from "path";
 import fs from "fs/promises";
 import Store from "electron-store";
@@ -72,7 +79,7 @@ const main = async () => {
   const tray = new Tray(getIconPath());
   const { x, y } = tray.getBounds();
   mainWindow.setBounds({ x: x, y: y });
-  tray.on("click", () => {
+  const showOrHideWindow = () => {
     if (mainWindow.isVisible()) {
       mainWindow.hide();
       return;
@@ -80,7 +87,9 @@ const main = async () => {
     mainWindow.setVisibleOnAllWorkspaces(true);
     mainWindow.show();
     mainWindow.setVisibleOnAllWorkspaces(false);
-  });
+  };
+  tray.on("click", showOrHideWindow);
+  globalShortcut.register("CommandOrControl+Shift+T", showOrHideWindow);
 
   nativeTheme.on("updated", () => tray.setImage(getIconPath()));
 
