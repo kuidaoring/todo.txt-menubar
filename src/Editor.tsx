@@ -6,66 +6,15 @@ import { history } from "@codemirror/history";
 import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { CodeMirror, vim, Vim } from "@replit/codemirror-vim";
-import { format, addDays, parse, subDays } from "date-fns";
 import { todotxt } from "./lib/language/todotxt";
 import "./Editor.css";
 import React from "react";
 import { Line } from "@codemirror/text";
 import { Task } from "./model/task";
+import compareTask from "./compareTask";
+import editorTheme from "./editorTheme";
 
-const transparentTheme = EditorView.theme({
-  "&": {
-    backgroundColor: "transparent !important",
-    height: "100%",
-  },
-  ".cm-gutters": {
-    backgroundColor: "transparent !important",
-  },
-  "&.cm-editor.cm-focused": {
-    outline: "none",
-  },
-  "&.cm-editor": {
-    height: "100%",
-  },
-  "&.cm-scroller": {
-    overflow: "auto",
-  },
-  ".cm-vimMode .cm-line": {
-    caretColor: "transparent !important",
-  },
-  ".cm-fat-cursor": {
-    position: "absolute",
-    background: "#ff9696",
-    border: "none",
-    whiteSpace: "pre",
-  },
-  "&:not(.cm-focused) .cm-fat-cursor": {
-    background: "none",
-    outline: "solid 1px #ff9696",
-  },
-  ".cm-panels.cm-panels-bottom": {
-    borderTop: "1px solid rgba(102, 102, 102, 0.2) !important",
-  },
-  ".cm-panels": {
-    backgroundColor: "transparent !important",
-    color: "#657b83 !important",
-  },
-  ".cm-panels input": {
-    color: "#657b83",
-  },
-  "@media (prefers-color-scheme: dark)": {
-    ".cm-panels.cm-panels-bottom": {
-      borderTop: "1px solid rgba(255, 255, 255, 0.2) !important",
-    },
-    ".cm-panels": {
-      backgroundColor: "transparent !important",
-      color: "#93a1a1 !important",
-    },
-    ".cm-panels input": {
-      color: "#93a1a1",
-    },
-  },
-});
+const transparentTheme = EditorView.theme(editorTheme);
 
 const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
 const themeMap = {
@@ -78,10 +27,6 @@ const getCurrentLine = (state: EditorState): Line | undefined => {
     .filter((range) => range.empty)
     .map((range) => state.doc.lineAt(range.head))
     .at(0);
-};
-
-const isTaskDone = (line: string): boolean => {
-  return line.startsWith("x ");
 };
 
 const handleMarkAsDone = (cm: CodeMirror): void => {
@@ -107,43 +52,12 @@ const handleMarkPriority = (
   if (!line) {
     return;
   }
-  if (isTaskDone(line.text)) {
-    return;
-  }
-  const regexp = new RegExp(`^\\(${inputPriority}\\) `);
-  if (line.text.match(regexp)) {
-    unMarkPriority(inputPriority, line, cm.cm6);
-  } else {
-    markPriority(inputPriority, line, cm.cm6);
-  }
-};
 
-const markPriority = (priority: string, line: Line, view: EditorView): void => {
-  let to = line.from;
-  if (line.text.match(/^\([A-Z]\) /)) {
-    to += 4;
-  }
-  view.dispatch({
-    changes: {
-      from: line.from,
-      to: to,
-      insert: `(${priority}) `,
-    },
-  });
-};
-
-const unMarkPriority = (
-  priority: string,
-  line: Line,
-  view: EditorView
-): void => {
-  const regexp = new RegExp(`^\\(${priority}\\) `);
-  const result = line.text.replace(regexp, "");
-  view.dispatch({
+  cm.cm6.dispatch({
     changes: {
       from: line.from,
       to: line.to,
-      insert: result,
+      insert: Task.build(line.text).markPriority(inputPriority).content,
     },
   });
 };
@@ -156,114 +70,44 @@ const handleChangePriority = (
   if (!line) {
     return;
   }
-  const matches = line.text.match(/^\(([A-Za-z])\) /);
-  if (!matches) {
-    return;
-  }
-  const currentPriority = matches[1].toUpperCase();
   const option = params.args[0] ?? null;
-  const charCode =
-    option === "inc"
-      ? currentPriority.charCodeAt(0) - 1
-      : option === "dec"
-      ? currentPriority.charCodeAt(0) + 1
-      : -1;
-  if (charCode < "A".charCodeAt(0) || charCode > "Z".charCodeAt(0)) {
-    return;
+  let task = Task.build(line.text);
+  if (option === "inc") {
+    task = task.incrementPriority();
+  } else if (option === "dec") {
+    task = task.decrementPriority();
   }
-
   cm.cm6.dispatch({
     changes: {
-      from: line.from + 1,
-      to: line.from + 2,
-      insert: String.fromCharCode(charCode),
+      from: line.from,
+      to: line.to,
+      insert: task.content,
     },
   });
 };
 
 const handleSortByPriority = (cm: CodeMirror): void => {
-  const lines = cm.cm6.state.doc.toString().split("\n");
-  lines.sort(compareTaskByPriority);
+  const tasks = cm.cm6.state.doc.toString().split("\n").map(Task.build);
+  tasks.sort(compareTask);
   cm.cm6.dispatch({
     changes: {
       from: 0,
       to: cm.cm6.state.doc.length,
-      insert: lines.join("\n"),
+      insert: tasks.map((task) => task.content).join("\n"),
     },
   });
 };
 
-const compareTaskByPriority = (a: string, b: string): number => {
-  const isATaskDone = isTaskDone(a);
-  const isBTaskDone = isTaskDone(b);
-  if (isATaskDone && isBTaskDone) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (isBTaskDone) {
-    return -1;
-  }
-  if (isATaskDone) {
-    return 1;
-  }
-  const aMatches = a.match(/^\(([A-Za-z])\) /);
-  const bMatches = b.match(/^\(([A-Za-z])\) /);
-  if (!aMatches && !bMatches) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (!bMatches) {
-    return -1;
-  }
-  if (!aMatches) {
-    return 1;
-  }
-  const aPriority = aMatches[1].toUpperCase();
-  const bPriority = bMatches[1].toUpperCase();
-  if (aPriority === bPriority) {
-    return compareTaskByDueDate(a, b);
-  }
-  if (aPriority < bPriority) {
-    return -1;
-  }
-  return 1;
-};
-
-const compareTaskByDueDate = (a: string, b: string): number => {
-  const aMatches = a.match(/due:(\d{4}-\d{2}-\d{2})/);
-  const bMatches = b.match(/due:(\d{4}-\d{2}-\d{2})/);
-  if (!aMatches && !bMatches) {
-    return 0;
-  }
-  if (aMatches && bMatches) {
-    if (aMatches[1] === bMatches[1]) {
-      return 0;
-    }
-    if (aMatches[1] < bMatches[1]) {
-      return -1;
-    }
-    return 1;
-  }
-  if (aMatches) {
-    return -1;
-  }
-  return 1;
-};
-
 const handleArchiveDone = (cm: CodeMirror, onArchive: OnArchiveFunc): void => {
-  const currentLines = cm.cm6.state.doc.toString().split("\n");
-  const doneContent = currentLines
-    .filter((line) => isTaskDone(line))
-    .join("\n");
-  const content = currentLines.filter((line) => !isTaskDone(line)).join("\n");
-  const lines = content.split("\n");
-  const todoList = lines.filter(
-    (line) => !isTaskDone(line) && !line.match(/^\s*$/)
-  );
-  const doneList = lines.filter((line) => isTaskDone(line));
+  const tasks = cm.cm6.state.doc.toString().split("\n").map(Task.build);
+  const doneTasks = tasks.filter((task) => task.isDone && !task.isEmpty());
+  const todoTasks = tasks.filter((task) => !task.isDone && !task.isEmpty());
+
   onArchive({
-    doneContent: doneContent,
-    content: content,
-    todoList: todoList,
-    doneList: doneList,
+    doneContent: doneTasks.map((task) => task.content).join("\n"),
+    content: todoTasks.map((task) => task.content).join("\n"),
+    doneList: doneTasks.map((task) => task.content),
+    todoList: todoTasks.map((task) => task.content),
   });
 };
 
@@ -275,47 +119,20 @@ const handleChangeDueDate = (
   if (!line) {
     return;
   }
-  if (isTaskDone(line.text)) {
-    return;
+  const option = params.args[0] ?? null;
+  let task = Task.build(line.text);
+  if (option === "inc") {
+    task = task.incrementDueDate();
+  } else if (option === "dec") {
+    task = task.decrementDueDate();
   }
-  const incrementOrDecrementFunc =
-    params.args[0] === "inc"
-      ? (date: Date): Date => addDays(date, 1)
-      : params.args[0] === "dec"
-      ? (date: Date): Date => subDays(date, 1)
-      : null;
-  if (!incrementOrDecrementFunc) {
-    return;
-  }
-  const dueDateMatch = line.text.match(/due:(\d{4}-\d{2}-\d{2})/);
-  if (!dueDateMatch) {
-    cm.cm6.dispatch({
-      changes: {
-        from: line.to,
-        insert: ` due:${format(
-          incrementOrDecrementFunc(new Date()),
-          "yyyy-LL-dd"
-        )}`,
-      },
-    });
-    return;
-  }
-  try {
-    const parsed = parse(dueDateMatch[1], "yyyy-LL-dd", new Date());
-    const replaced = line.text.replace(
-      `due:${dueDateMatch[1]}`,
-      `due:${format(incrementOrDecrementFunc(parsed), "yyyy-LL-dd")}`
-    );
-    cm.cm6.dispatch({
-      changes: {
-        from: line.from,
-        to: line.to,
-        insert: replaced,
-      },
-    });
-  } catch (err) {
-    return;
-  }
+  cm.cm6.dispatch({
+    changes: {
+      from: line.from,
+      to: line.to,
+      insert: task.content,
+    },
+  });
 };
 
 interface Props {
@@ -363,12 +180,18 @@ const Editor: React.FC<Props> = ({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const content = update.state.doc.toString();
-            const lines = content.split("\n");
-            const todoList = lines.filter(
-              (line) => !isTaskDone(line) && !line.match(/^\s*$/)
+            const tasks = content.split("\n").map(Task.build);
+            const todoTasks = tasks.filter(
+              (task) => !task.isDone && !task.isEmpty()
             );
-            const doneList = lines.filter((line) => isTaskDone(line));
-            onChange(content, todoList, doneList);
+            const doneTasks = tasks.filter(
+              (task) => task.isDone && !task.isEmpty()
+            );
+            onChange(
+              content,
+              todoTasks.map((task) => task.content),
+              doneTasks.map((task) => task.content)
+            );
           }
         }),
       ];

@@ -1,4 +1,5 @@
-import { parse, format } from "date-fns";
+import { parse, format, addDays, subDays } from "date-fns";
+import { Priority } from "./priority";
 
 type Label = {
   key: string;
@@ -35,11 +36,15 @@ export class Task {
     this.doneDate = doneDate;
   }
 
-  toggleAsDone() {
+  isEmpty(): boolean {
+    return !!this.content.match(/^\s*$/);
+  }
+
+  toggleAsDone(): Task {
     return this.isDone ? this.unMarkAsDone() : this.markAsDone();
   }
 
-  markAsDone() {
+  markAsDone(): Task {
     let content = this.content;
     if (this.priority.value) {
       content = content.slice(4) + ` ${this.priority.getLabelString()}`;
@@ -52,7 +57,7 @@ export class Task {
     return Task.build(content);
   }
 
-  unMarkAsDone() {
+  unMarkAsDone(): Task {
     let content = this.content.replace(/^x (\d{4}-\d{2}-\d{2} )?/, "");
 
     const priorityLabel = this.labels.find((l) => l.key === "pri");
@@ -66,18 +71,76 @@ export class Task {
     return Task.build(content);
   }
 
-  markPriority(value: string) {
+  markPriority(value: string): Task {
     if (this.isDone) {
       return this;
     }
 
     const priority = new Priority(value);
+    if (!priority.value) {
+      return this;
+    }
+
     let content = this.content;
     if (this.priority.value) {
       content = content.slice(4);
     }
-    if (priority.value) {
-      content = `(${priority.value}) content`;
+    if (this.priority.value !== priority.value) {
+      content = `(${priority.value}) ${content}`;
+    }
+
+    return Task.build(content);
+  }
+
+  incrementPriority(): Task {
+    if (this.isDone) {
+      return this;
+    }
+    const nextPriority = this.priority.increment();
+    if (!nextPriority.value) {
+      return this;
+    }
+    return this.markPriority(nextPriority.value);
+  }
+
+  decrementPriority(): Task {
+    if (this.isDone) {
+      return this;
+    }
+
+    const nextPriority = this.priority.decrement();
+    if (!nextPriority.value) {
+      return this;
+    }
+
+    return this.markPriority(nextPriority.value);
+  }
+
+  incrementDueDate(): Task {
+    return this.modifyDueDate((date: Date) => {
+      return addDays(date, 1);
+    });
+  }
+
+  decrementDueDate(): Task {
+    return this.modifyDueDate((date: Date) => {
+      return subDays(date, 1);
+    });
+  }
+
+  modifyDueDate(callback: (date: Date) => Date): Task {
+    if (this.isDone) {
+      return this;
+    }
+    let content = this.content;
+    if (!this.dueDate) {
+      content = `${content} due:${format(callback(new Date()), "yyyy-LL-dd")}`;
+    } else {
+      const dueDateString = format(this.dueDate, "yyyy-LL-dd");
+      content = content.replace(
+        `due:${dueDateString}`,
+        `due:${format(callback(this.dueDate), "yyyy-LL-dd")}`
+      );
     }
 
     return Task.build(content);
@@ -118,49 +181,5 @@ export class Task {
       dueDate,
       doneDate
     );
-  }
-}
-
-class Priority {
-  readonly value: string | null;
-
-  constructor(value: string | null) {
-    if (value?.match(/^[A-Za-z]$/)) {
-      this.value = value.toUpperCase();
-    } else {
-      this.value = null;
-    }
-  }
-
-  getLabelString() {
-    if (this.value) {
-      return `pri:${this.value}`;
-    }
-    return "";
-  }
-
-  getLabel() {
-    if (this.value) {
-      return {
-        key: "pri",
-        value: this.value,
-      };
-    }
-    return null;
-  }
-
-  static build(content: string, isDone: boolean): Priority {
-    if (isDone) {
-      const matchPriorityLabel = / pri:([A-Za-z])(\s|$)/.exec(content);
-      if (!matchPriorityLabel) {
-        return new Priority(null);
-      }
-      return new Priority(matchPriorityLabel[1]);
-    }
-    const matchPriority = /^\(([A-Za-z])\)/.exec(content);
-    if (!matchPriority) {
-      return new Priority(null);
-    }
-    return new Priority(matchPriority[1]);
   }
 }
