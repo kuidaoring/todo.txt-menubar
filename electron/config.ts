@@ -21,7 +21,15 @@ export type Config = {
   editor: EditorConfig;
 };
 
-export type EditorConfig = { lineWrapping: boolean };
+export type EditorConfig = {
+  lineWrapping: boolean;
+  font: FontConfig;
+};
+
+export type FontConfig = {
+  family: string;
+  size: number;
+};
 
 export const defaults = {
   file: {
@@ -34,5 +42,9 @@ export const defaults = {
   },
   editor: {
     lineWrapping: true,
+    font: {
+      family: "monospace",
+      size: 12,
+    },
   },
 };

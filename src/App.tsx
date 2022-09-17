@@ -282,6 +282,7 @@ const App: React.FC = () => {
           }}
           content={state.content}
           lineWrapping={state.editorConfig.lineWrapping}
+          font={state.editorConfig.font}
         />
       )}
       <footer>

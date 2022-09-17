@@ -14,8 +14,6 @@ import { Task } from "./model/task";
 import compareTask from "./compareTask";
 import editorTheme from "./editorTheme";
 
-const transparentTheme = EditorView.theme(editorTheme);
-
 const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
 const themeMap = {
   light: solarizedLight,
@@ -140,6 +138,10 @@ interface Props {
   onArchive: OnArchiveFunc;
   content: string;
   lineWrapping: boolean;
+  font: {
+    size: number;
+    family: string;
+  };
 }
 
 type OnArchiveFunc = (archiveContentInfo: ArchiveContentInfo) => void;
@@ -149,6 +151,7 @@ const Editor: React.FC<Props> = ({
   onArchive,
   content,
   lineWrapping,
+  font,
 }) => {
   const [theme, setTheme] = useState<"dark" | "light">(
     isDark() ? "dark" : "light"
@@ -168,6 +171,16 @@ const Editor: React.FC<Props> = ({
   useEffect(() => {
     if (containerRef.current) {
       const [vimStyle, vimPlugin, , vimPanelState] = vim() as Extension[];
+      const transparentTheme = EditorView.theme({
+        ...editorTheme,
+        "&": {
+          ...editorTheme["&"],
+          fontSize: `${font.size}px`,
+        },
+        ".cm-content": {
+          fontFamily: font.family,
+        },
+      });
       let extensions = [
         history(),
         lineNumbers(),
