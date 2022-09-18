@@ -227,7 +227,7 @@ const Editor: React.FC<Props> = ({
         });
       }
     }
-  }, [theme]);
+  }, [theme, onChange, lineWrapping, font]);
 
   useEffect(() => {
     if (viewRef.current) {
