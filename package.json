@@ -61,6 +61,7 @@
     "wait-on": "^6.0.0"
   },
   "build": {
+    "appId": "com.gihub.kuidaoring.todotxt-menubar",
     "extends": null,
     "files": [
       "build/**/*",
