@@ -26,6 +26,8 @@ const getIconPath = () => {
 const main = async () => {
   await app.whenReady();
 
+  app.dock.hide();
+
   const store = new Store<Config>({ defaults: defaults });
   const config: Config = {
     file: store.get("file"),
