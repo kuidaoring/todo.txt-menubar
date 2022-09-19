@@ -1,6 +1,15 @@
 {
   "name": "todo.txt-menubar",
-  "version": "0.1.0",
+  "description": "todo.txt mac menubar app",
+  "author": {
+    "name": "Yuji Sato",
+    "url": "https://github.com/kuidaoring"
+  },
+  "version": "0.1.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kuidaoring/todo.txt-menubar.git"
+  },
   "private": true,
   "main": "build/electron/electron.js",
   "homepage": "./",
@@ -61,11 +70,18 @@
     "wait-on": "^6.0.0"
   },
   "build": {
+    "productName": "todo.txt-menubar",
     "appId": "com.gihub.kuidaoring.todotxt-menubar",
+    "artifactName": "${productName}-${version}.${ext}",
     "extends": null,
     "files": [
       "build/**/*",
       "asset/*"
-    ]
+    ],
+    "mac": {
+      "publish": {
+        "provider": "github"
+      }
+    }
   }
 }
