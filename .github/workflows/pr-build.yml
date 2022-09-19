@@ -16,4 +16,4 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           release: false
-          build_script_name: electron:build-test:mac
+          build_script_name: electron:build
