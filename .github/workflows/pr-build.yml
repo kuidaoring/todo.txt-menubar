@@ -1,0 +1,19 @@
+name: Build electron app
+on:
+  - pull_request
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout git repository
+        uses: actions/checkout@v3
+      - name: Install node.js, npm
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Build and release Electron app
+        uses: samuelmeuli/action-electron-builder@v1.6.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          release: false
+          build_script_name: electron:build:mac
