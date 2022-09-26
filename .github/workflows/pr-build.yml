@@ -11,10 +11,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-      - name: Build and Electron app
+      - name: Build Electron app
         uses: samuelmeuli/action-electron-builder@v1.6.0
         with:
           github_token: ${{ secrets.github_token }}
           release: false
           build_script_name: electron:build
           args: --publish never
+          mac_certs: ${{ secrets.CSC_LINK }}
+          mac_certs_password: ${{ secrets.CSC_KEY_PASSWORD }}
