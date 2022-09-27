@@ -15,6 +15,10 @@ jobs:
           node-version: 16
       - name: Build and release Electron app
         uses: samuelmeuli/action-electron-builder@v1.6.0
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
         with:
           github_token: ${{ secrets.github_token }}
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
