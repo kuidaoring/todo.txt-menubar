@@ -13,7 +13,7 @@ jobs:
           node-version: 16
       - name: Build Electron app
         env:
-          APPLE_ID: ${{ secretes.APPLE_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
           TEAM_ID: ${{ secrets.TEAM_ID }}
         uses: samuelmeuli/action-electron-builder@v1.6.0
