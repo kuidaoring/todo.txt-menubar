@@ -62,7 +62,7 @@ const main = async () => {
       : "http://localhost:3000"
   );
 
-  if (app.isPackaged) {
+  if (!app.isPackaged) {
     mainWindow.webContents.openDevTools();
   }
 
