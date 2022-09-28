@@ -75,7 +75,7 @@
   "build": {
     "productName": "todo.txt-menubar",
     "afterSign": "notarizeApp.js",
-    "appId": "com.gihub.kuidaoring.todotxt-menubar",
+    "appId": "com.github.kuidaoring.todotxt-menubar",
     "artifactName": "${productName}-${version}.${ext}",
     "extends": null,
     "files": [
