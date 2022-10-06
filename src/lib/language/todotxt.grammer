@@ -33,7 +33,7 @@ NormalContent {
 }
 
 Description {
-  (Project | Context | DueDate | Content)*
+  (Project | Context | DueDate | Url | Content)*
 }
 
 @tokens {
@@ -50,15 +50,16 @@ Description {
   priorityPrefix { "(" }
   projectPrefix { "+" }
   contextPrefix { "@" }
-  symbolWithoutSpecialChar { $[\[\]{})'"?!*#\$%&=~^|\\`\-_;:.,] }
+  symbolWithoutSpecialChar { $[\[\]{})'"?!*#\$%&=~^|\\`\-_;:.,/] }
   name { (std.asciiLetter | std.digit | unicodeChar | symbolWithoutSpecialChar)+ }
   Project { "+" (name | contextPrefix)+ }
   Context { "@" (name | projectPrefix)+ }
+  Url { "http" "s"? "://" $[0-9a-zA-Z:%#\$&?!@_()~.=+\-/]+ }
   Content { name (name | priorityPrefix | contextPrefix | projectPrefix)* }
   d { $[0-9] }
   Date { d d d d "-" d d "-" d d }
   DueDate { "due:" Date }
-  @precedence { whitespace, Done, DueDate, Content }
+  @precedence { whitespace, Done, DueDate, Url, Content }
 }
 
 @detectDelim
