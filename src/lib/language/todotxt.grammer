@@ -33,11 +33,11 @@ NormalContent {
 }
 
 Description {
-  (Project | Context | DueDate | Url | Content)*
+  (Project | Context | DueDate | URL | Content)*
 }
 
 @tokens {
-  whitespace { std.whitespace+ }
+  whitespace { @whitespace+ }
   NewLine { $[\n\r] }
   @precedence { NewLine, whitespace }
 
@@ -51,15 +51,15 @@ Description {
   projectPrefix { "+" }
   contextPrefix { "@" }
   symbolWithoutSpecialChar { $[\[\]{})'"?!*#\$%&=~^|\\`\-_;:.,/] }
-  name { (std.asciiLetter | std.digit | unicodeChar | symbolWithoutSpecialChar)+ }
+  name { (@asciiLetter | @digit | unicodeChar | symbolWithoutSpecialChar)+ }
   Project { "+" (name | contextPrefix)+ }
   Context { "@" (name | projectPrefix)+ }
-  Url { "http" "s"? "://" $[0-9a-zA-Z:%#\$&?!@_()~.=+\-/]+ }
+  URL { "http" "s"? "://" $[0-9a-zA-Z:%#\$&?!@_()~.=+\-/]+ }
   Content { name (name | priorityPrefix | contextPrefix | projectPrefix)* }
   d { $[0-9] }
   Date { d d d d "-" d d "-" d d }
   DueDate { "due:" Date }
-  @precedence { whitespace, Done, DueDate, Url, Content }
+  @precedence { whitespace, Done, DueDate, URL, Content }
 }
 
 @detectDelim
