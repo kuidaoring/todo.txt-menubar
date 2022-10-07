@@ -6,6 +6,7 @@ import { solarizedDark } from "cm6-theme-solarized-dark";
 import { solarizedLight } from "cm6-theme-solarized-light";
 import { CodeMirror, vim, Vim } from "@replit/codemirror-vim";
 import { todotxt } from "./lib/language/todotxt";
+import { hyperLink } from "@uiw/codemirror-extensions-hyper-link";
 import "./Editor.css";
 import React from "react";
 import { Line } from "@codemirror/state";
@@ -187,6 +188,7 @@ const Editor: React.FC<Props> = ({
         vimPlugin,
         vimPanelState,
         todotxt(),
+        hyperLink,
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
