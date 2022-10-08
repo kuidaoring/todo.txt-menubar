@@ -38,6 +38,9 @@ const editorTheme = {
   ".cm-panels input": {
     color: "#657b83",
   },
+  ".cm-hyper-link-icon svg": {
+    color: "#2aa198",
+  },
   "@media (prefers-color-scheme: dark)": {
     ".cm-panels.cm-panels-bottom": {
       borderTop: "1px solid rgba(255, 255, 255, 0.2) !important",

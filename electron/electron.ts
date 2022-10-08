@@ -5,6 +5,7 @@ import {
   Tray,
   ipcMain,
   globalShortcut,
+  shell,
 } from "electron";
 import path from "path";
 import fs from "fs/promises";
@@ -72,6 +73,15 @@ const main = async () => {
       content,
       loadSuccess
     );
+  });
+
+  mainWindow.webContents.on("will-navigate", (e, url) => {
+    shell.openExternal(url);
+  });
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url);
+    return { action: "deny" };
   });
 
   mainWindow.on("blur", () => {
