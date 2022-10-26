@@ -148,8 +148,12 @@ export class Task {
 
   static build(content: string): Task {
     const isDone = content.startsWith("x ");
-    const projects = [...content.matchAll(/\+(\S+)/g)].map((v) => v.toString());
-    const contexts = [...content.matchAll(/@(\S+)/g)].map((v) => v.toString());
+    const projects = [...content.matchAll(/\+(\S+)/g)].map((v) =>
+      v[0].toString()
+    );
+    const contexts = [...content.matchAll(/@(\S+)/g)].map((v) =>
+      v[0].toString()
+    );
     const labels = content
       .split(/\s/)
       .map((token) => token.match(/^([^@+]\S+):(\S+)/))

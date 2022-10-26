@@ -14,6 +14,8 @@ import { Line } from "@codemirror/state";
 import { Task } from "./model/task";
 import compareTask from "./compareTask";
 import editorTheme from "./editorTheme";
+import { completeContext, completeProject } from "./complete";
+import { autocompletion } from "@codemirror/autocomplete";
 
 const isDark = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
 const themeMap = {
@@ -160,6 +162,9 @@ const Editor: React.FC<Props> = ({
   const viewRef = useRef<EditorView>(null!);
   const containerRef = useRef<HTMLDivElement>(null);
   const onArchiveRef = useRef<OnArchiveFunc>(onArchive);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [contexts, setContexts] = useState<string[]>([]);
+  const updateTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     window
@@ -189,25 +194,38 @@ const Editor: React.FC<Props> = ({
         vimPlugin,
         vimPanelState,
         todotxt(),
+        autocompletion({
+          override: [
+            (context) => completeProject(context, projects),
+            (context) => completeContext(context, contexts),
+          ],
+        }),
         hyperLink,
         dueDate,
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
-            const content = update.state.doc.toString();
-            const tasks = content.split("\n").map(Task.build);
-            const todoTasks = tasks.filter(
-              (task) => !task.isDone && !task.isEmpty()
-            );
-            const doneTasks = tasks.filter(
-              (task) => task.isDone && !task.isEmpty()
-            );
-            onChange(
-              content,
-              todoTasks.map((task) => task.content),
-              doneTasks.map((task) => task.content)
-            );
+            if (updateTimer.current) {
+              clearTimeout(updateTimer.current);
+            }
+            updateTimer.current = setTimeout(() => {
+              const content = update.state.doc.toString();
+              const tasks = content.split("\n").map(Task.build);
+              const todoTasks = tasks.filter(
+                (task) => !task.isDone && !task.isEmpty()
+              );
+              const doneTasks = tasks.filter(
+                (task) => task.isDone && !task.isEmpty()
+              );
+              setProjects([...new Set(tasks.flatMap((task) => task.projects))]);
+              setContexts([...new Set(tasks.flatMap((task) => task.contexts))]);
+              onChange(
+                content,
+                todoTasks.map((task) => task.content),
+                doneTasks.map((task) => task.content)
+              );
+            }, 1000);
           }
         }),
       ];
@@ -230,7 +248,7 @@ const Editor: React.FC<Props> = ({
         });
       }
     }
-  }, [theme, onChange, lineWrapping, font]);
+  }, [theme, onChange, lineWrapping, font, contexts, projects]);
 
   useEffect(() => {
     if (viewRef.current) {
