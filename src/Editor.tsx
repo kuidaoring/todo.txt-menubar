@@ -8,6 +8,7 @@ import { CodeMirror, vim, Vim } from "@replit/codemirror-vim";
 import { todotxt } from "./lib/language/todotxt";
 import { hyperLink } from "@uiw/codemirror-extensions-hyper-link";
 import { dueDate } from "./dueDateExtension";
+import { doneToggle } from "./doneToggleExtension";
 import "./Editor.css";
 import React from "react";
 import { Line } from "@codemirror/state";
@@ -202,6 +203,7 @@ const Editor: React.FC<Props> = ({
         }),
         hyperLink,
         dueDate,
+        doneToggle,
         themeMap[theme],
         transparentTheme,
         EditorView.updateListener.of((update) => {
