@@ -225,6 +225,7 @@ const Editor: React.FC<Props> = ({
                 todoTasks.map((task) => task.content),
                 doneTasks.map((task) => task.content)
               );
+              updateTimer.current = null;
             }, 1000);
           }
         }),
